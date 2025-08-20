@@ -1,9 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 
-# Create your models here.
-from django.contrib.auth import get_user_model
-from django.db import models
 
 User = get_user_model()
 
@@ -25,5 +22,5 @@ class Comment(models.Model):
     )
     text = models.TextField()
     created = models.DateTimeField(
-        'QWRER добавления', auto_now_add=True
+        'Дата добавления', auto_now_add=True
     )

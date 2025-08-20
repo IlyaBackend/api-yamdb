@@ -1,15 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 
-class Post(models.Model):
-    text = models.TextField(
-        verbose_name='Текст поста'
-    )
-    pub_date = models.DateTimeField(
-        'Дата публикации',
-        auto_now_add=True,
-        db_index=True,
-    )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,

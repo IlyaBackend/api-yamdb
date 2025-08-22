@@ -9,7 +9,25 @@ User = get_user_model()
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    pass
+    """Сериализатор для произведений."""
+    average_rating = serializers.SerializerMethodField(read_only=True)
+    reviews_number = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Title
+        fields = [
+            'id', 'name', 'year', 'description', 'category', 'genre',
+            'average_rating', 'reviews_rating'
+        ]
+
+    def get_average_rating(self, title):
+        """
+        Возвращает среднюю оценку произведения
+        или сообщение об отсутствии отзывов.
+        """
+        avg_rating = getattr(title, 'average_rating', None)
+        return round(avg_rating) if avg_rating is not None else (
+            f'Произведение {title.name} еще не имеет отзывов.')
 
 
 class ReviewSerializer(serializers.ModelSerializer):

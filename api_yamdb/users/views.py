@@ -1,7 +1,8 @@
 from django.core.mail import send_mail
 from django.conf import settings
 from rest_framework import status, viewsets
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
@@ -23,100 +24,28 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = AdminUserSerializer
     permission_classes = [IsAdmin]
     lookup_field = 'username'
+    filter_backends = (SearchFilter,)
+    search_fields = ('username',)
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
     def get_permissions(self):
         '''
         Разные права доступа для разных действий
         '''
-        if self.action in ['signup', 'token']:
-            return [AllowAny()]
         if self.action == 'me':
             return [IsAuthenticated()]
         return super().get_permissions()
 
     def get_serializer_class(self):
-        if self.action in ['me']:
-            return UserSerializer
-        if self.action in ['signup']:
+        if self.action == 'me':
             return UserSerializer
         return AdminUserSerializer
 
     @action(
-        methods=['post'],
-        detail=False,
-        permission_classes=[AllowAny()],
-        url_path='auth/signup'
-    )
-    def signup(self, request):
-        '''
-        регистрация пользователя и кода
-        '''
-        if request.data.get('username') == 'me':
-            return Response(
-                {'username': ['Такой username занят']},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        serializer = UserSignUpSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user, created = CustomUser.objects.get_or_create(
-            **serializer.validated_data
-        )
-        if not created:
-            # Пользователь уже существует, возвращаем ошибку
-            return Response(
-                {'error': 'Пользователь с подобными данными уже существует'},
-                status=status.HTTP_400_BAD_REQUEST)
-        # try:
-        #     user = CustomUser.objects.get(
-        #         username=serializer.validated_data.get('username'),
-        #         email=serializer.validated_data.get('email')
-        #     )
-        #     return Response(serializer.data, status=status.HTTP_200_OK)
-        # except CustomUser.DoesNotExist:
-        #     user = CustomUser.objects.create(
-        #         **serializer.validated_data
-        #     )
-        user.generate_confirmation_code()
-        send_mail(
-            subject='Yamdb confirmation code',
-            message=f'Ваш код подтверждения: {user.confirmation_code}',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email]
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @action(
-        methods=['post'],
-        detail=False,
-        permission_classes=[AllowAny()],
-        url_path='auth/token/'
-    )
-    def token(self, request):
-        '''
-        Выдача токена по username и коду
-        '''
-        username = request.data.get('username')
-        confirmation_code = request.data.get('confirmation_code')
-        try:
-            user = CustomUser.objects.get(username=username)
-        except CustomUser.DoesNotExist:
-            return Response(
-                {'error': 'Пользователь не найден.'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        if user.confirmation_code != confirmation_code:
-            return Response(
-                {'error': 'Отсутствует обязательное поле или оно некорректно'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        token = AccessToken.for_user(user)
-        return Response({'token': str(token)})
-
-    @action(
         methods=['get', 'patch'],
         detail=False,
-        permission_classes=[IsAuthenticated()],
-        url_path='users/me'
+        permission_classes=[IsAuthenticated],
+        url_path='me'
     )
     def me(self, request):
         '''
@@ -124,11 +53,60 @@ class UserViewSet(viewsets.ModelViewSet):
         '''
         user = request.user
         if request.method == 'GET':
-            serializer = UserSerializer(user)
-            return Response(serializer.data)
+            return Response(UserSerializer(user).data)
         serializer = UserSerializer(
             user, data=request.data, partial=True
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def signup(request):
+    '''
+    регистрация пользователя и кода
+    '''
+    serializer = UserSignUpSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    user, _ = CustomUser.objects.get_or_create(
+        **serializer.validated_data
+    )
+    user.generate_confirmation_code()
+    send_mail(
+        subject='Yamdb confirmation code',
+        message=f'Ваш код подтверждения: {user.confirmation_code}',
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email]
+    )
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def get_token(request):
+    '''
+    Выдача токена по username и коду
+    '''
+    username = request.data.get('username')
+    confirmation_code = request.data.get('confirmation_code')
+    if not username or not confirmation_code:
+        return Response(
+            {'error': 'Поля "username" и "confirmation_code" обязательны.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    try:
+        user = CustomUser.objects.get(username=username)
+    except CustomUser.DoesNotExist:
+        return Response(
+            {'error': 'Пользователь не найден.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    if user.confirmation_code != confirmation_code:
+        return Response(
+            {'error': 'Отсутствует обязательное поле или оно некорректно'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    return Response(
+        {'token': str(AccessToken.for_user(user))}, status=status.HTTP_200_OK)

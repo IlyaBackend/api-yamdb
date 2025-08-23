@@ -11,15 +11,15 @@ from titles.models import Review, Title
 from users.permissions import IsAdmin
 
 
-class TitleViewSet(viewsets.ModelViewSet):
-    """Класс для управления отзывов на произведения."""
-    serializer_class = TitleSerializer
+# class TitleViewSet(viewsets.ModelViewSet):
+#     """Класс для управления отзывов на произведения."""
+#     serializer_class = TitleSerializer
 
-    def get_title_info(self):
-        return Title.objects.annotate(
-            average_rating=Avg('reviews__rating'),
-            reviews_number=Count('reviews'),
-        ).order_by('-average_rating')
+#     def get_title_info(self):
+#         return Title.objects.annotate(
+#             average_rating=Avg('reviews__rating'),
+#             reviews_number=Count('reviews'),
+#         ).order_by('-average_rating')
 
 
 class ReviewViewSet(viewsets.ModelViewSet):

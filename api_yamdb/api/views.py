@@ -1,15 +1,48 @@
 from django.db.models import Count, Avg
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets
+from rest_framework import filters, viewsets
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 
 from api.serializers import (
-    CommentSerializer, ReviewSerializer, TitleSerializer
+    CategorySerializer, CommentSerializer, GenreSerializer,
+    ReviewSerializer, TitleSerializer, TitleCRUDSerializer
 )
-from titles.models import Review, Title
-from users.permissions import IsAdmin
+from titles.models import Category, Genre, Review, Title
 
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    """Класс для управления категориями"""
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+    lookup_field = 'slug'
+
+
+class GenreViewSet(viewsets.ModelViewSet):
+    """Класс для управления жанрами"""
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+    lookup_field = 'slug'
+
+
+class TitleViewSet(viewsets.ModelViewSet):
+    """Класс для управления произведениями"""
+    queryset = Title.objects.all()
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name', 'description')
+    filterset_fields = ('year', 'category', 'genre')
+
+    def get_serializer_class(self):
+        if self.action in ('create', 'partial_update', 'update'):
+            return TitleCRUDSerializer
+        return TitleSerializer
 
 # class TitleViewSet(viewsets.ModelViewSet):
 #     """Класс для управления отзывов на произведения."""

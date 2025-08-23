@@ -1,7 +1,8 @@
+from datetime import datetime
+
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
-from datetime import datetime
 
 User = get_user_model()
 
@@ -100,6 +101,7 @@ class TitleGenre(models.Model):
     class Meta:
         verbose_name = 'Жанр-Произведение'
         verbose_name_plural = 'Жанры-произведения'
+        # constraints для избежания дубликатов.
         constraints = [
             models.UniqueConstraint(
                 fields=['title', 'genre'],

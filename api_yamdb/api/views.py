@@ -70,9 +70,11 @@ class TitleViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     def get_serializer_class(self):
-        if self.action in ('create', 'partial_update', 'update'):
-            return TitleCRUDSerializer
-        return TitleSerializer
+        return (
+            TitleCRUDSerializer
+            if self.action in ('create', 'partial_update', 'update')
+            else TitleSerializer
+        )
 
 
 class ReviewsViewSet(viewsets.ModelViewSet):

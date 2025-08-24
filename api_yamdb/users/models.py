@@ -12,9 +12,9 @@ ROLE_CHOICES = [
 
 
 class CustomUser(AbstractUser):
-    '''
+    """
     Кастомная моедль пользователя
-    '''
+    """
     email = models.EmailField(
         max_length=254,
         unique=True,
@@ -38,6 +38,12 @@ class CustomUser(AbstractUser):
         default=None,
         verbose_name='Код подтверждения'
     )
+
+    class meta:
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+        ordering = ('id', 'username',)
+        default_related_name = 'users'
 
     def generate_confirmation_code(self):
         self.confirmation_code = secrets.token_urlsafe(20)

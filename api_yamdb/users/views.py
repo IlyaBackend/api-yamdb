@@ -17,10 +17,10 @@ from .serializers import (
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    '''
+    """
     Класс полностью отвечает за управление пользователями и аутентификацикей
-    '''
-    queryset = CustomUser.objects.all()
+    """
+    queryset = CustomUser.objects.all().order_by('id', 'username')
     serializer_class = AdminUserSerializer
     permission_classes = [IsAdmin]
     lookup_field = 'username'
@@ -29,9 +29,9 @@ class UserViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
 
     def get_permissions(self):
-        '''
+        """
         Разные права доступа для разных действий
-        '''
+        """
         return [IsAuthenticated()] if self.action == 'me' else (
             super().get_permissions())
 
@@ -45,9 +45,9 @@ class UserViewSet(viewsets.ModelViewSet):
         url_path='me'
     )
     def me(self, request):
-        '''
+        """
         Просмотр и редактирование своего профиля
-        '''
+        """
         user = request.user
         if request.method == 'GET':
             return Response(UserSerializer(user).data)
@@ -62,9 +62,9 @@ class UserViewSet(viewsets.ModelViewSet):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def signup(request):
-    '''
+    """
     регистрация пользователя и кода
-    '''
+    """
     serializer = UserSignUpSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     user, _ = CustomUser.objects.get_or_create(
@@ -83,9 +83,9 @@ def signup(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def get_token(request):
-    '''
+    """
     Выдача токена по username и коду
-    '''
+    """
     username = request.data.get('username')
     confirmation_code = request.data.get('confirmation_code')
     if not username or not confirmation_code:

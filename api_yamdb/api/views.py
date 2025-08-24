@@ -19,7 +19,6 @@ from reviews.models import Category, Genre, Review, Title
 
 
 class StandardPagination(PageNumberPagination):
-    # Нужен явный page_size,чтобы в ответе появился ключ 'results'
     page_size = 10
     page_size_query_param = 'page_size'
     max_page_size = 100
@@ -31,9 +30,9 @@ class CreateListDestroyViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
-    '''
+    """
     Базовый вьюсет для категорий и жанров
-    '''
+    """
     pagination_class = StandardPagination
     filter_backends = (filters.SearchFilter,)
 
@@ -61,7 +60,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.annotate(
         score=Avg('reviews__score'),
         reviews_number=Count('reviews')
-    ).all()
+    ).all().order_by('-year', 'name',)
     pagination_class = StandardPagination
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter, DjangoFilterBackend)

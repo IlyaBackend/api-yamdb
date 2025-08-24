@@ -45,10 +45,10 @@ class UserSignUpSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    '''
+    """
     Сериализер для модели пользователя.
     Просмотр/редактирование профилей
-    '''
+    """
     class Meta:
         model = CustomUser
         fields = (
@@ -58,10 +58,10 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class AdminUserSerializer(serializers.ModelSerializer):
-    '''
+    """
     Сериализер для администратора.
     Администратор может просматривать и изменять роль пользователя
-    '''
+    """
     class Meta:
         model = CustomUser
         fields = (

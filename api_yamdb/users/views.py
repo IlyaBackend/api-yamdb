@@ -1,5 +1,5 @@
-from django.core.mail import send_mail
 from django.conf import settings
+from django.core.mail import send_mail
 from rest_framework import status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.filters import SearchFilter
@@ -8,12 +8,12 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
 from .models import CustomUser
+from .permissions import IsAdmin
 from .serializers import (
     UserSignUpSerializer,
     UserSerializer,
     AdminUserSerializer
 )
-from .permissions import IsAdmin
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -32,14 +32,11 @@ class UserViewSet(viewsets.ModelViewSet):
         '''
         Разные права доступа для разных действий
         '''
-        if self.action == 'me':
-            return [IsAuthenticated()]
-        return super().get_permissions()
+        return [IsAuthenticated()] if self.action == 'me' else (
+            super().get_permissions())
 
     def get_serializer_class(self):
-        if self.action == 'me':
-            return UserSerializer
-        return AdminUserSerializer
+        return UserSerializer if self.action == 'me' else AdminUserSerializer
 
     @action(
         methods=['get', 'patch'],

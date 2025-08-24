@@ -1,10 +1,11 @@
 from django.db.models import Count, Avg
-from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from django.shortcuts import get_object_or_404
 from rest_framework import filters, mixins, viewsets
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
+from .filters import TitleFilters
 from .permissions import IsAdminOrReadOnly, IsAuthorAdminModeratorOrReadOnly
 from .serializers import (
     CategorySerializer,
@@ -18,7 +19,7 @@ from reviews.models import Category, Genre, Review, Title
 
 
 class StandardPagination(PageNumberPagination):
-    # Нужен явный page_size, чтобы в ответе появился ключ 'results'
+    # Нужен явный page_size,чтобы в ответе появился ключ 'results'
     page_size = 10
     page_size_query_param = 'page_size'
     max_page_size = 100
@@ -65,22 +66,24 @@ class TitleViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter, DjangoFilterBackend)
     search_fields = ('name', 'description')
-    filterset_fields = ('year', 'category__slug', 'genre')
+    filterset_class = TitleFilters
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     def get_serializer_class(self):
-        if self.action in ('create', 'partial_update', 'update'):
-            return TitleCRUDSerializer
-        return TitleSerializer
+        return (
+            TitleCRUDSerializer
+            if self.action in ('create', 'partial_update', 'update')
+            else TitleSerializer
+        )
 
 
 class ReviewsViewSet(viewsets.ModelViewSet):
     """Класс для управления отзывов на произведения."""
     serializer_class = ReviewsSerializer
-    lookup_field = 'id'
     permission_classes = (
         IsAuthenticatedOrReadOnly, IsAuthorAdminModeratorOrReadOnly
     )
+    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     def get_title(self):
         return get_object_or_404(Title, id=self.kwargs['title_id'])
@@ -95,8 +98,10 @@ class ReviewsViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     """Класс для управления комментариев к отзывам."""
     serializer_class = CommentSerializer
-    lookup_field = 'id'
-    permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorAdminModeratorOrReadOnly)
+    permission_classes = (
+        IsAuthenticatedOrReadOnly, IsAuthorAdminModeratorOrReadOnly
+    )
+    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     def get_review(self):
         return get_object_or_404(

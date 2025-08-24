@@ -46,7 +46,6 @@ class Title(models.Model):
         verbose_name='Название произведения'
     )
 
-    # Год выпуска должен быть положительным.
     year = models.PositiveIntegerField(
         verbose_name='Год выпуска',
         validators=[
@@ -63,13 +62,11 @@ class Title(models.Model):
         Category,
         on_delete=models.SET_NULL,
         null=True,
-        related_name='titles',
         verbose_name='Категория'
     )
     genre = models.ManyToManyField(
         Genre,
         through='TitleGenre',
-        related_name='titles',
         verbose_name='Жанр'
     )
 
@@ -77,9 +74,8 @@ class Title(models.Model):
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
         ordering = ('-year', 'name',)
+        default_related_name = 'titles'
 
-    # На случай если название произведения
-    # будет длинным, лучше ограничить 20 символами.
 
     def __str__(self):
         return (self.name[:STR_LENGTH] + '...'

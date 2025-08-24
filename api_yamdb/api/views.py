@@ -4,6 +4,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, viewsets
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from .filters import TitleFilters
 
 from .permissions import IsAdminOrReadOnly, IsAuthorAdminModeratorOrReadOnly
 from .serializers import (
@@ -65,13 +66,15 @@ class TitleViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter, DjangoFilterBackend)
     search_fields = ('name', 'description')
-    filterset_fields = ('year', 'category__slug', 'genre')
+    filterset_class = TitleFilters
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     def get_serializer_class(self):
-        if self.action in ('create', 'partial_update', 'update'):
-            return TitleCRUDSerializer
-        return TitleSerializer
+        return (
+            TitleCRUDSerializer
+            if self.action in ('create', 'partial_update', 'update')
+            else TitleSerializer
+        )
 
 
 class ReviewsViewSet(viewsets.ModelViewSet):

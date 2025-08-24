@@ -22,17 +22,17 @@ class TitleSerializer(serializers.ModelSerializer):
     """Сериализатор для произведений."""
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(many=True, read_only=True)
-    score = serializers.SerializerMethodField(read_only=True)
+    rating = serializers.SerializerMethodField(read_only=True)
     reviews_number = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Title
         fields = [
             'id', 'name', 'year', 'description', 'category', 'genre',
-            'score', 'reviews_number'
+            'rating', 'reviews_number'
         ]
 
-    def get_score(self, title):
+    def get_rating(self, title):
         """
         Возвращает среднюю оценку произведения
         или сообщение об отсутствии отзывов.

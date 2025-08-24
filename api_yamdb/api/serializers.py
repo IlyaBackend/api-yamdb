@@ -1,16 +1,12 @@
-from django.contrib.auth import get_user_model
 from rest_framework import serializers
-
-from titles.models import Category, Genre, Title
-
-User = get_user_model()
+from reviews.models import Category, Comment, Review, Genre, Title
 
 
 class CategorySerializer(serializers.ModelSerializer):
     """Сериализатор для категорий."""
 
     class Meta:
-        fields = '__all__'
+        exclude = ('id',)
         model = Category
 
 
@@ -18,34 +14,31 @@ class GenreSerializer(serializers.ModelSerializer):
     """Сериализатор для жанров."""
 
     class Meta:
-        fields = '__all__'
         model = Genre
+        exclude = ('id',)
 
 
 class TitleSerializer(serializers.ModelSerializer):
     """Сериализатор для произведений."""
-    # Добавил две строчки в код Алексея, связанных данных,
-    # для лучшего вывода API.
-    category = CategorySerializer(read_only=True)  # Добавил
-    genre = GenreSerializer(many=True, read_only=True)  # Добавил
-    average_rating = serializers.SerializerMethodField(read_only=True)
+    category = CategorySerializer(read_only=True)
+    genre = GenreSerializer(many=True, read_only=True)
+    score = serializers.SerializerMethodField(read_only=True)
     reviews_number = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Title
         fields = [
             'id', 'name', 'year', 'description', 'category', 'genre',
-            'average_rating', 'reviews_rating'
+            'score', 'reviews_number'
         ]
 
-    def get_average_rating(self, title):
+    def get_score(self, title):
         """
         Возвращает среднюю оценку произведения
         или сообщение об отсутствии отзывов.
         """
-        avg_rating = getattr(title, 'average_rating', None)
-        return round(avg_rating) if avg_rating is not None else (
-            f'Произведение {title.name} еще не имеет отзывов.')
+        avg_score = getattr(title, 'score', None)
+        return round(avg_score) if avg_score is not None else None
 
 
 class TitleCRUDSerializer(serializers.ModelSerializer):
@@ -61,5 +54,48 @@ class TitleCRUDSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        fields = ('id', 'name', 'year', 'description', 'genre', 'category')
+        fields = ('__all__')
         model = Title
+
+
+class ReviewsSerializer(serializers.ModelSerializer):
+    """Сериализатор для отзывов на произведения."""
+    author = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='username',
+        default=serializers.CurrentUserDefault()
+    )
+
+    class Meta:
+        model = Review
+        fields = ('id', 'text', 'score', 'author', 'pub_date')
+        read_only_fields = ('author', 'pub_date', 'title')
+
+    def validate(self, data):
+        request = self.context['request']
+        title_id = self.context['view'].kwargs.get('title_id')
+        user = request.user
+
+        if request.method == 'POST':
+            if Review.objects.filter(author=user, title_id=title_id).exists():
+                raise serializers.ValidationError(
+                    'Вы уже оставляли отзыв на это произведение.'
+                )
+        return data
+
+    def validate_score(self, value):
+        if not 1 <= value <= 10:
+            raise serializers.ValidationError('Оценка должна быть от 1 до 10.')
+        return value
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    """Сериализатор для комментариев к отзывам на произведения."""
+    author = serializers.SlugRelatedField(
+        read_only=True, slug_field='username'
+    )
+
+    class Meta():
+        model = Comment
+        fields = ('id', 'text', 'author', 'pub_date', 'reviews')
+        read_only_fields = ('author', 'reviews')

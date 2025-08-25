@@ -58,9 +58,7 @@ class GenreViewSet(CreateListDestroyViewSet):
 class TitleViewSet(viewsets.ModelViewSet):
     """Класс для управления произведениями"""
     queryset = Title.objects.annotate(
-        score=Avg('reviews__score'),
-        reviews_number=Count('reviews')
-    ).all().order_by('-year', 'name',)
+        score=Avg('reviews__score')).all().order_by('-year', 'name',)
     pagination_class = StandardPagination
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter, DjangoFilterBackend)

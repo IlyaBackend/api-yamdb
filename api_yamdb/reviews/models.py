@@ -113,7 +113,7 @@ class Review(models.Model):
     title = models.ForeignKey(
         Title, on_delete=models.CASCADE, verbose_name='Произведение'
     )
-    text = models.TextField(null=True, blank=True, verbose_name='Отзыв')
+    text = models.TextField(verbose_name='Отзыв')
     score = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)],
         verbose_name='Оценка произведения'
@@ -141,9 +141,7 @@ class Comment(models.Model):
     """Модель комментария к отзыву на произведение."""
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     reviews = models.ForeignKey(Review, on_delete=models.CASCADE)
-    text = models.TextField(
-        null=False, blank=False, verbose_name='Комментарий'
-    )
+    text = models.TextField(verbose_name='Комментарий')
     pub_date = models.DateTimeField(
         'Дата добавления комментария', auto_now_add=True
     )

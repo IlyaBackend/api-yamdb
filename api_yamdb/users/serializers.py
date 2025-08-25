@@ -1,4 +1,5 @@
 from rest_framework import serializers
+
 from .models import CustomUser
 
 
@@ -44,10 +45,10 @@ class UserSignUpSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    '''
+    """
     Сериализер для модели пользователя.
     Просмотр/редактирование профилей
-    '''
+    """
     class Meta:
         model = CustomUser
         fields = (
@@ -55,14 +56,66 @@ class UserSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('role',)
 
+    def validate_username(self, value):
+        if value == 'me':
+            raise serializers.ValidationError(
+                'Нельзя использовать "me" в качестве username'
+            )
+        return value
+
 
 class AdminUserSerializer(serializers.ModelSerializer):
-    '''
-    Сериализер для администратора.
-    Администратор может просматривать и изменять роль пользователя
-    '''
+    """
+    Сериализатор для администратора.
+    Админ может создавать пользователей и назначать им роль.
+    """
+    role = serializers.ChoiceField(
+        choices=[
+            ('user', 'user'),
+            ('moderator', 'moderator'),
+            ('admin', 'admin')
+        ],
+        required=False
+    )
+    first_name = serializers.CharField(
+        required=False,
+        max_length=150,
+        allow_blank=True,
+        default=''
+    )
+    last_name = serializers.CharField(
+        required=False,
+        max_length=150,
+        allow_blank=True,
+        default=''
+    )
+    bio = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        default=''
+    )
+
     class Meta:
         model = CustomUser
         fields = (
             'username', 'email', 'first_name', 'last_name', 'bio', 'role'
         )
+
+    def validate_username(self, value):
+        if value == 'me':
+            raise serializers.ValidationError(
+                'Нельзя использовать "me" в качестве username'
+            )
+        return value
+
+    def create(self, validated_data):
+        # если роль не передана → user
+        if 'role' not in validated_data:
+            validated_data['role'] = 'user'
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        request = self.context.get('request')
+        if request and not request.user.is_admin():
+            validated_data.pop('role', None)
+        return super().update(instance, validated_data)

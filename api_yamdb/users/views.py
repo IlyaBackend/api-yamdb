@@ -38,6 +38,17 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         return UserSerializer if self.action == 'me' else AdminUserSerializer
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     @action(
         methods=['get', 'patch'],
         detail=False,
@@ -90,7 +101,7 @@ def get_token(request):
     confirmation_code = request.data.get('confirmation_code')
     if not username or not confirmation_code:
         return Response(
-            {'error': 'Поля "username" и "confirmation_code" обязательны.'},
+            {'error': 'Поля: "username" и "confirmation_code" обязательны.'},
             status=status.HTTP_400_BAD_REQUEST
         )
     try:

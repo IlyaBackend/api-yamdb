@@ -55,6 +55,17 @@ class TitleCRUDSerializer(serializers.ModelSerializer):
         fields = ('__all__')
         model = Title
 
+    def validate_genre(self, value):
+        """Валидация жанров"""
+        if not value or len(value) == 0:
+            raise serializers.ValidationError("Жанры не могут быть пустыми")
+        return value
+
+    def to_representation(self, instance):
+        """Сериализует объект через TitleSerializer."""
+        serializer = TitleSerializer(instance, context=self.context)
+        return serializer.data
+
 
 class ReviewsSerializer(serializers.ModelSerializer):
     """Сериализатор для отзывов на произведения."""

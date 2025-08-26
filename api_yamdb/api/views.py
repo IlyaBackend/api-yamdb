@@ -1,4 +1,4 @@
-from django.db.models import Count, Avg
+from django.db.models import Avg
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, mixins, viewsets
@@ -58,9 +58,7 @@ class GenreViewSet(CreateListDestroyViewSet):
 class TitleViewSet(viewsets.ModelViewSet):
     """Класс для управления произведениями"""
     queryset = Title.objects.annotate(
-        score=Avg('reviews__score'),
-        reviews_number=Count('reviews')
-    ).all().order_by('-year', 'name',)
+        score=Avg('reviews__score')).all().order_by('-year', 'name',)
     pagination_class = StandardPagination
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter, DjangoFilterBackend)

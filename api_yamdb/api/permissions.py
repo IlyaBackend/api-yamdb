@@ -29,4 +29,5 @@ class IsAuthorAdminModeratorOrReadOnly(BasePermission):
             obj.author == user
             or getattr(user, 'role', None) == 'admin'
             or getattr(user, 'role', None) == 'moderator'
+            or getattr(user, 'role', None) == 'superuser'
         )

@@ -33,6 +33,13 @@ class UserSignUpSerializer(serializers.ModelSerializer):
             })
         user_by_username = CustomUser.objects.filter(username=username).first()
         user_by_email = CustomUser.objects.filter(email=email).first()
+        if (user_by_email and user_by_email.username != username) and (
+            user_by_username and user_by_username.email != email
+        ):
+            raise serializers.ValidationError({
+                'username': 'username занят другим пользователем',
+                'email': 'email занят другим пользователем'
+            })
         if user_by_username and user_by_username.email != email:
             raise serializers.ValidationError({
                 'username': 'username занят другим пользователем'

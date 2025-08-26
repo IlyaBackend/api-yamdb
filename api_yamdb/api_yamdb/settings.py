@@ -1,7 +1,9 @@
 from datetime import timedelta
-from dotenv import load_dotenv
 from pathlib import Path
+
 import os
+
+from dotenv import load_dotenv
 
 
 load_dotenv()
@@ -23,9 +25,9 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'djoser',
+    'users',
     'reviews',
     'api',
-    'users',
 ]
 
 MIDDLEWARE = [

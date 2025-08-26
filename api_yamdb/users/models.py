@@ -8,13 +8,14 @@ ROLE_CHOICES = [
     ('user', 'Аутентифицированный пользователь'),
     ('moderator', 'Модератор'),
     ('admin', 'Администратор'),
+    ('superuser', 'Суперпользователь'),
 ]
 
 
 class CustomUser(AbstractUser):
-    '''
+    """
     Кастомная моедль пользователя
-    '''
+    """
     email = models.EmailField(
         max_length=254,
         unique=True,
@@ -38,6 +39,19 @@ class CustomUser(AbstractUser):
         default=None,
         verbose_name='Код подтверждения'
     )
+
+    class meta:
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+        ordering = ('id', 'username',)
+        default_related_name = 'users'
+
+    def save(self, *args, **kwargs):
+        if self.is_superuser:
+            self.role = 'superuser'
+        elif self.is_staff and self.role != 'superuser':
+            self.role = 'admin'
+        super().save(*args, **kwargs)
 
     def generate_confirmation_code(self):
         self.confirmation_code = secrets.token_urlsafe(20)

@@ -23,13 +23,11 @@ class TitleSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(many=True, read_only=True)
     rating = serializers.SerializerMethodField(read_only=True)
-    reviews_number = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Title
         fields = [
-            'id', 'name', 'year', 'description', 'category', 'genre',
-            'rating', 'reviews_number'
+            'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
         ]
 
     def get_rating(self, title):
@@ -57,6 +55,17 @@ class TitleCRUDSerializer(serializers.ModelSerializer):
         fields = ('__all__')
         model = Title
 
+    def validate_genre(self, value):
+        """Валидация жанров"""
+        if not value or len(value) == 0:
+            raise serializers.ValidationError("Жанры не могут быть пустыми")
+        return value
+
+    def to_representation(self, instance):
+        """Сериализует объект через TitleSerializer."""
+        serializer = TitleSerializer(instance, context=self.context)
+        return serializer.data
+
 
 class ReviewsSerializer(serializers.ModelSerializer):
     """Сериализатор для отзывов на произведения."""
@@ -68,7 +77,7 @@ class ReviewsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
-        fields = ('id', 'text', 'score', 'author', 'pub_date')
+        fields = ('id', 'text', 'score', 'author', 'pub_date',)
         read_only_fields = ('author', 'pub_date', 'title')
 
     def validate(self, data):
@@ -97,5 +106,5 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta():
         model = Comment
-        fields = ('id', 'text', 'author', 'pub_date', 'reviews')
+        fields = ('id', 'text', 'author', 'pub_date')
         read_only_fields = ('author', 'reviews')

@@ -1,5 +1,5 @@
-from django.core.mail import send_mail
 from django.conf import settings
+from django.core.mail import send_mail
 from rest_framework import status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.filters import SearchFilter
@@ -8,19 +8,19 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
 from .models import CustomUser
+from .permissions import IsAdmin
 from .serializers import (
     UserSignUpSerializer,
     UserSerializer,
     AdminUserSerializer
 )
-from .permissions import IsAdmin
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    '''
+    """
     Класс полностью отвечает за управление пользователями и аутентификацикей
-    '''
-    queryset = CustomUser.objects.all()
+    """
+    queryset = CustomUser.objects.all().order_by('id', 'username')
     serializer_class = AdminUserSerializer
     permission_classes = [IsAdmin]
     lookup_field = 'username'
@@ -29,17 +29,25 @@ class UserViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
 
     def get_permissions(self):
-        '''
+        """
         Разные права доступа для разных действий
-        '''
-        if self.action == 'me':
-            return [IsAuthenticated()]
-        return super().get_permissions()
+        """
+        return [IsAuthenticated()] if self.action == 'me' else (
+            super().get_permissions())
 
     def get_serializer_class(self):
-        if self.action == 'me':
-            return UserSerializer
-        return AdminUserSerializer
+        return UserSerializer if self.action == 'me' else AdminUserSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         methods=['get', 'patch'],
@@ -48,9 +56,9 @@ class UserViewSet(viewsets.ModelViewSet):
         url_path='me'
     )
     def me(self, request):
-        '''
+        """
         Просмотр и редактирование своего профиля
-        '''
+        """
         user = request.user
         if request.method == 'GET':
             return Response(UserSerializer(user).data)
@@ -65,9 +73,9 @@ class UserViewSet(viewsets.ModelViewSet):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def signup(request):
-    '''
+    """
     регистрация пользователя и кода
-    '''
+    """
     serializer = UserSignUpSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     user, _ = CustomUser.objects.get_or_create(
@@ -86,14 +94,14 @@ def signup(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def get_token(request):
-    '''
+    """
     Выдача токена по username и коду
-    '''
+    """
     username = request.data.get('username')
     confirmation_code = request.data.get('confirmation_code')
     if not username or not confirmation_code:
         return Response(
-            {'error': 'Поля "username" и "confirmation_code" обязательны.'},
+            {'error': 'Поля: "username" и "confirmation_code" обязательны.'},
             status=status.HTTP_400_BAD_REQUEST
         )
     try:

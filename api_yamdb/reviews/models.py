@@ -7,7 +7,6 @@ from users.models import CustomUser
 
 User = CustomUser
 
-# Константа, ограничиваем в 20 символов.
 STR_LENGTH = 20
 
 
@@ -62,13 +61,11 @@ class Title(models.Model):
         Category,
         on_delete=models.SET_NULL,
         null=True,
-        related_name='titles',
         verbose_name='Категория'
     )
     genre = models.ManyToManyField(
         Genre,
         through='TitleGenre',
-        related_name='titles',
         verbose_name='Жанр'
     )
 
@@ -76,10 +73,10 @@ class Title(models.Model):
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
         ordering = ('-year', 'name',)
+        default_related_name = 'titles'
 
     def __str__(self):
-        return (self.name[:STR_LENGTH] + '...'
-                if len(self.name) > STR_LENGTH else self.name)
+        return (self.name[:STR_LENGTH])
 
 
 class TitleGenre(models.Model):
@@ -98,7 +95,6 @@ class TitleGenre(models.Model):
     class Meta:
         verbose_name = 'Жанр-Произведение'
         verbose_name_plural = 'Жанры-произведения'
-        # constraints для избежания дубликатов.
         constraints = [
             models.UniqueConstraint(
                 fields=['title', 'genre'],
@@ -116,7 +112,7 @@ class Review(models.Model):
     title = models.ForeignKey(
         Title, on_delete=models.CASCADE, verbose_name='Произведение'
     )
-    text = models.TextField(null=True, blank=True, verbose_name='Отзыв')
+    text = models.TextField(verbose_name='Отзыв')
     score = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)],
         verbose_name='Оценка произведения'
@@ -144,9 +140,7 @@ class Comment(models.Model):
     """Модель комментария к отзыву на произведение."""
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     reviews = models.ForeignKey(Review, on_delete=models.CASCADE)
-    text = models.TextField(
-        null=False, blank=False, verbose_name='Комментарий'
-    )
+    text = models.TextField(verbose_name='Комментарий')
     pub_date = models.DateTimeField(
         'Дата добавления комментария', auto_now_add=True
     )

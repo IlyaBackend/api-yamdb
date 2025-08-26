@@ -76,8 +76,7 @@ class Title(models.Model):
         default_related_name = 'titles'
 
     def __str__(self):
-        return (self.name[:STR_LENGTH] + '...'
-                if len(self.name) > STR_LENGTH else self.name)
+        return (self.name[:STR_LENGTH])
 
 
 class TitleGenre(models.Model):

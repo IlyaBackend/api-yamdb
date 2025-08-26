@@ -1,9 +1,10 @@
 from datetime import timedelta
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 from pathlib import Path
-# import os
+import os
 
-# load_dotenv()
+
+load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY')
@@ -111,7 +112,6 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 DEFAULT_FROM_EMAIL = 'no-reply@yamdb.ru'
 

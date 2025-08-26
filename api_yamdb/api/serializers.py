@@ -58,13 +58,12 @@ class TitleCRUDSerializer(serializers.ModelSerializer):
     def validate_genre(self, value):
         """Валидация жанров"""
         if not value or len(value) == 0:
-            raise serializers.ValidationError("Жанры не могут быть пустыми")
+            raise serializers.ValidationError('Жанры не могут быть пустыми')
         return value
 
     def to_representation(self, instance):
         """Сериализует объект через TitleSerializer."""
-        serializer = TitleSerializer(instance, context=self.context)
-        return serializer.data
+        return TitleSerializer(instance, context=self.context).data
 
 
 class ReviewsSerializer(serializers.ModelSerializer):
@@ -83,10 +82,11 @@ class ReviewsSerializer(serializers.ModelSerializer):
     def validate(self, data):
         request = self.context['request']
         title_id = self.context['view'].kwargs.get('title_id')
-        user = request.user
 
         if request.method == 'POST':
-            if Review.objects.filter(author=user, title_id=title_id).exists():
+            if Review.objects.filter(
+                author=request.user, title_id=title_id
+            ).exists():
                 raise serializers.ValidationError(
                     'Вы уже оставляли отзыв на это произведение.'
                 )

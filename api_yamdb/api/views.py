@@ -30,8 +30,6 @@ from .serializers import (
 
 from api_yamdb.constants import MY_USER_PROFILE
 from reviews.models import Category, Genre, Review, Title, User
-
-
 from .filters import TitleFilters
 from .pagination import StandardPagination
 from .permissions import (IsAdmin, IsAdminOrReadOnly,
@@ -50,6 +48,7 @@ class CreateListDestroyViewSet(
     viewsets.GenericViewSet
 ):
     """Базовый вьюсет для категорий и жанров."""
+
     pagination_class = StandardPagination
     filter_backends = (filters.SearchFilter,)
 

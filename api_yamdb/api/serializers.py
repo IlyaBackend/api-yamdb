@@ -149,9 +149,7 @@ class TitleSerializer(serializers.ModelSerializer):
 
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(many=True, read_only=True)
-
     rating = serializers.IntegerField(read_only=True, default=None)
-
 
     class Meta:
         model = Title
@@ -182,14 +180,6 @@ class TitleCRUDSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         """Сериализует объект через TitleSerializer."""
-
-        instance = (
-            Title.objects
-            .annotate(rating=Avg('reviews__score'))
-            .select_related('category')
-            .prefetch_related('genre')
-            .get(pk=instance.pk)
-        )
 
         return TitleSerializer(instance, context=self.context).data
 

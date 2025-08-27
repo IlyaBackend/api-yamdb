@@ -11,6 +11,7 @@ from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
+
 from rest_framework import filters, mixins, viewsets
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
@@ -123,8 +124,6 @@ def get_token(request):
 
 class CategoryGenreBaseViewSet(CreateListDestroyViewSet):
     """Базовый ViewSet для категорий и жанров."""
-
-
 
     permission_classes = (IsAdminOrReadOnly,)
     search_fields = ('name',)

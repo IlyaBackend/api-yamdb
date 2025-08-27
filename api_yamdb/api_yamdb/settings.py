@@ -1,9 +1,12 @@
 from datetime import timedelta
-# from dotenv import load_dotenv
 from pathlib import Path
-# import os
 
-# load_dotenv()
+import os
+
+from dotenv import load_dotenv
+
+
+load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY')
@@ -22,9 +25,9 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'djoser',
+    'users',
     'reviews',
     'api',
-    'users',
 ]
 
 MIDDLEWARE = [
@@ -111,7 +114,6 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 DEFAULT_FROM_EMAIL = 'no-reply@yamdb.ru'
 

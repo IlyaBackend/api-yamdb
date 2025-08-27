@@ -11,7 +11,7 @@ from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
-=======
+
 from rest_framework import filters, mixins, viewsets
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
@@ -43,21 +43,15 @@ from .serializers import (AdminUserSerializer, CategorySerializer,
                           UserSignUpSerializer)
 
 
-
 class CreateListDestroyViewSet(
     mixins.CreateModelMixin,
     mixins.ListModelMixin,
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
-
     """Базовый вьюсет для категорий и жанров."""
-
-
-
     pagination_class = StandardPagination
     filter_backends = (filters.SearchFilter,)
-
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -132,34 +126,26 @@ def get_token(request):
 class CategoryGenreBaseViewSet(CreateListDestroyViewSet):
     """Базовый ViewSet для категорий и жанров."""
 
-
-
     permission_classes = (IsAdminOrReadOnly,)
     search_fields = ('name',)
     lookup_field = 'slug'
 
 
 class CategoryViewSet(CategoryGenreBaseViewSet):
-
     """Класс для управления категориями."""
-
-
 
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
 
 class GenreViewSet(CategoryGenreBaseViewSet):
-
     """Класс для управления жанрами."""
-
 
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-
     """Класс для управления произведениями."""
 
     queryset = (

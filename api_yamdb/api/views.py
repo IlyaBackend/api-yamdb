@@ -6,12 +6,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.filters import SearchFilter
-from rest_framework.permissions import (AllowAny, IsAuthenticated,
+from rest_framework.permissions import (SAFE_METHODS, AllowAny,
+                                        IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
-from api_yamdb.constants import MY_USER_PROFILE
+from api_yamdb.constants import MY_USER_PROFILE, ROLE_USER
 from reviews.models import Category, Genre, Review, Title, User
 
 from .filters import TitleFilters
@@ -31,19 +32,19 @@ class CreateListDestroyViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
-
     """
     Базовый вьюсет для категорий и жанров
     """
+
     pagination_class = StandardPagination
     filter_backends = (filters.SearchFilter,)
 
 
 class UserViewSet(viewsets.ModelViewSet):
-
     """
     Класс полностью отвечает за управление пользователями и аутентификацикей
     """
+
     queryset = User.objects.all().order_by('id', 'username')
     serializer_class = AdminUserSerializer
     permission_classes = [IsAdmin]
@@ -51,11 +52,6 @@ class UserViewSet(viewsets.ModelViewSet):
     filter_backends = (SearchFilter,)
     search_fields = ('username',)
     http_method_names = ['get', 'post', 'patch', 'delete']
-
-    def get_object(self):
-        if self.kwargs.get(self.lookup_field) == MY_USER_PROFILE:
-            return self.request.user
-        return super().get_object()
 
     @action(
         methods=['get', 'patch'],
@@ -70,8 +66,10 @@ class UserViewSet(viewsets.ModelViewSet):
         user = request.user
         if request.method == 'GET':
             return Response(AdminUserSerializer(user).data)
+        data = request.data.copy()
+        data['role'] = user.role
         serializer = AdminUserSerializer(
-            user, data=request.data, partial=True,
+            user, data=data, partial=True,
             context={'request': request, 'view': self}
         )
         serializer.is_valid(raise_exception=True)
@@ -88,7 +86,6 @@ def signup(request):
     serializer = UserSignUpSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     user = serializer.save()
-    print('>>>', serializer.data)
     confirmation_code = user.generate_confirmation_code()
     send_mail(
         subject='Yamdb confirmation code',
@@ -108,7 +105,9 @@ def get_token(request):
     serializer = TokenSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     return Response(
-        {'token': str(AccessToken.for_user(serializer.context.get('user')))},
+        {'token': str(AccessToken.for_user(
+            serializer.context.get(ROLE_USER)
+        ))},
         status=status.HTTP_200_OK
     )
 
@@ -155,7 +154,6 @@ class TitleViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     def get_serializer_class(self):
-        SAFE_METHODS = ('GET', 'HEAD', 'OPTIONS')
         return (
             TitleSerializer
             if self.request.method in SAFE_METHODS

@@ -3,15 +3,22 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from api_yamdb.constants import (EMAIL_MAX_LENGTH, MY_USER_PROFILE,
-                                 ROLE_CHOICES, ROLE_MAX_LENGTH, ROLE_USER)
+from api_yamdb.constants import (EMAIL_MAX_LENGTH, MY_USER_PROFILE, ROLE_ADMIN,
+                                 ROLE_CHOICES, ROLE_MAX_LENGTH, ROLE_MODERATOR,
+                                 ROLE_USER, USERNAME_MAX_LENGTH)
+
+from .validators import username_validator, validate_username
 
 
 class Account(AbstractUser):
+    """Кастомная моедль пользователя"""
 
-    """
-    Кастомная моедль пользователя
-    """
+    username = models.CharField(
+        max_length=USERNAME_MAX_LENGTH,
+        unique=True,
+        validators=[validate_username, username_validator],
+        verbose_name='Имя пользователя'
+    )
     email = models.EmailField(
         max_length=EMAIL_MAX_LENGTH,
         unique=True,
@@ -28,16 +35,24 @@ class Account(AbstractUser):
         verbose_name='Биография'
     )
 
-    def save(self, *args, **kwargs):
-        self.clean()
-        if self.is_staff and self.role != 'moderator':
-            self.role = 'admin'
-        super().save(*args, **kwargs)
-
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
         ordering = ('id', 'username',)
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        if self.is_staff and self.role != ROLE_MODERATOR:
+            self.role = ROLE_ADMIN
+        super().save(*args, **kwargs)
+
+    def clean(self):
+        super().clean()
+        if self.username == MY_USER_PROFILE:
+            raise ValidationError({
+                'username':
+                F'Нельзя использовать {MY_USER_PROFILE} в качестве username'
+            })
 
     def generate_confirmation_code(self):
         """
@@ -51,16 +66,9 @@ class Account(AbstractUser):
         """
         return default_token_generator.check_token(self, token)
 
-    def clean(self):
-        super().clean()
-        if self.username == MY_USER_PROFILE:
-            raise ValidationError({
-                'username': 'Нельзя использовать "me" в качестве username'
-            })
-
     @property
     def is_moderator(self):
-        return self.role == 'moderator'
+        return self.role == ROLE_MODERATOR
 
     def is_admin(self):
-        return self.role == 'admin' or self.is_staff
+        return self.role == ROLE_ADMIN or self.is_staff

@@ -3,6 +3,7 @@ from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.filters import SearchFilter
@@ -10,9 +11,26 @@ from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
+=======
+from rest_framework import filters, mixins, viewsets
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+
+from .filters import TitleFilters
+from .pagination import StandardPagination
+from .permissions import IsAdminOrReadOnly, IsAuthorAdminModeratorOrReadOnly
+from .serializers import (
+    CategorySerializer,
+    CommentSerializer,
+    GenreSerializer,
+    ReviewsSerializer,
+    TitleSerializer,
+    TitleCRUDSerializer,
+)
+
 
 from api_yamdb.constants import MY_USER_PROFILE
 from reviews.models import Category, Genre, Review, Title, User
+
 
 from .filters import TitleFilters
 from .pagination import StandardPagination
@@ -25,16 +43,21 @@ from .serializers import (AdminUserSerializer, CategorySerializer,
                           UserSignUpSerializer)
 
 
+
 class CreateListDestroyViewSet(
     mixins.CreateModelMixin,
     mixins.ListModelMixin,
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
+
     """Базовый вьюсет для категорий и жанров."""
+
+
 
     pagination_class = StandardPagination
     filter_backends = (filters.SearchFilter,)
+
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -109,26 +132,34 @@ def get_token(request):
 class CategoryGenreBaseViewSet(CreateListDestroyViewSet):
     """Базовый ViewSet для категорий и жанров."""
 
+
+
     permission_classes = (IsAdminOrReadOnly,)
     search_fields = ('name',)
     lookup_field = 'slug'
 
 
 class CategoryViewSet(CategoryGenreBaseViewSet):
+
     """Класс для управления категориями."""
+
+
 
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
 
 class GenreViewSet(CategoryGenreBaseViewSet):
+
     """Класс для управления жанрами."""
+
 
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
 
 
 class TitleViewSet(viewsets.ModelViewSet):
+
     """Класс для управления произведениями."""
 
     queryset = (

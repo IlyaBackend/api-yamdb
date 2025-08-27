@@ -128,6 +128,7 @@ class TokenSerializer(serializers.Serializer):
         return data
 
 
+
 class CategorySerializer(serializers.ModelSerializer):
     """Сериализатор для категорий."""
 
@@ -149,7 +150,9 @@ class TitleSerializer(serializers.ModelSerializer):
 
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(many=True, read_only=True)
+
     rating = serializers.IntegerField(read_only=True, default=None)
+
 
     class Meta:
         model = Title
@@ -159,7 +162,9 @@ class TitleSerializer(serializers.ModelSerializer):
 
 
 class TitleCRUDSerializer(serializers.ModelSerializer):
+
     """Сериализатор для создания, обновления, обработки данных."""
+
 
     genre = serializers.SlugRelatedField(
         slug_field='slug',
@@ -180,6 +185,7 @@ class TitleCRUDSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         """Сериализует объект через TitleSerializer."""
+
         instance = (
             Title.objects
             .annotate(rating=Avg('reviews__score'))
@@ -187,6 +193,7 @@ class TitleCRUDSerializer(serializers.ModelSerializer):
             .prefetch_related('genre')
             .get(pk=instance.pk)
         )
+
         return TitleSerializer(instance, context=self.context).data
 
 
@@ -204,7 +211,9 @@ class ReviewsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
+
         fields = ('id', 'text', 'score', 'author', 'pub_date')
+
 
     def validate(self, data):
         request = self.context['request']

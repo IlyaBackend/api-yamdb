@@ -11,7 +11,6 @@ from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
-=======
 from rest_framework import filters, mixins, viewsets
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
@@ -30,8 +29,6 @@ from .serializers import (
 
 from api_yamdb.constants import MY_USER_PROFILE
 from reviews.models import Category, Genre, Review, Title, User
-
-
 from .filters import TitleFilters
 from .pagination import StandardPagination
 from .permissions import (IsAdmin, IsAdminOrReadOnly,
@@ -43,21 +40,16 @@ from .serializers import (AdminUserSerializer, CategorySerializer,
                           UserSignUpSerializer)
 
 
-
 class CreateListDestroyViewSet(
     mixins.CreateModelMixin,
     mixins.ListModelMixin,
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
-
     """Базовый вьюсет для категорий и жанров."""
-
-
 
     pagination_class = StandardPagination
     filter_backends = (filters.SearchFilter,)
-
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -140,26 +132,20 @@ class CategoryGenreBaseViewSet(CreateListDestroyViewSet):
 
 
 class CategoryViewSet(CategoryGenreBaseViewSet):
-
     """Класс для управления категориями."""
-
-
 
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
 
 class GenreViewSet(CategoryGenreBaseViewSet):
-
     """Класс для управления жанрами."""
-
 
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-
     """Класс для управления произведениями."""
 
     queryset = (

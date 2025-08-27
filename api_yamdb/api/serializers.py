@@ -11,11 +11,11 @@ from reviews.models import Category, Comment, Genre, Review, Title, User
 
 
 class UserSignUpSerializer(serializers.ModelSerializer):
-
     """
     Сериализатор для регистрации нового пользователя.
     Принимает только username и email
     """
+
     username = serializers.RegexField(
         REGULAR_USERNAME,
         required=True,
@@ -59,11 +59,11 @@ class UserSignUpSerializer(serializers.ModelSerializer):
 
 
 class AdminUserSerializer(serializers.ModelSerializer):
-
     """
     Сериализатор для администратора.
     Админ может создавать пользователей и назначать им роль.
     """
+
     first_name = serializers.CharField(
         required=False,
         max_length=FIRST_NAME_MAX_LENGTH,
@@ -101,11 +101,11 @@ class AdminUserSerializer(serializers.ModelSerializer):
 
 
 class TokenSerializer(serializers.Serializer):
-
     """
     Сериализатор для валидации username, confirmation_code
     и последующего создания токена.
     """
+
     username = serializers.CharField(
         max_length=USERNAME_MAX_LENGTH,
         required=True
@@ -126,7 +126,6 @@ class TokenSerializer(serializers.Serializer):
             )
         self.context['user'] = user
         return data
-
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -162,9 +161,7 @@ class TitleSerializer(serializers.ModelSerializer):
 
 
 class TitleCRUDSerializer(serializers.ModelSerializer):
-
     """Сериализатор для создания, обновления, обработки данных."""
-
 
     genre = serializers.SlugRelatedField(
         slug_field='slug',
@@ -211,9 +208,7 @@ class ReviewsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
-
         fields = ('id', 'text', 'score', 'author', 'pub_date')
-
 
     def validate(self, data):
         request = self.context['request']

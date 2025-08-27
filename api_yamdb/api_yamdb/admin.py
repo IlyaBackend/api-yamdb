@@ -1,13 +1,14 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+from django.utils.translation import gettext_lazy as _
 
 from reviews.models import Category, Comment, Genre, Review, Title
-from users.models import CustomUser
+from users.models import Account
 
 
-@admin.register(CustomUser)
-class CustomUserAdmin(UserAdmin):
-    model = CustomUser
+@admin.register(Account)
+class AccountAdmin(UserAdmin):
+    model = Account
     list_display = ('username', 'email', 'role', 'is_staff', 'is_active')
     list_filter = ('role', 'is_staff', 'is_active')
     search_fields = ('username', 'email')
@@ -20,42 +21,42 @@ class CustomUserAdmin(UserAdmin):
         ('Права доступа', {'fields': (
             'role', 'is_staff', 'is_active', 'is_superuser'
         )}),
-        ('Код подтверждения', {'fields': ('confirmation_code',)}),
     )
 
 
+@admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('pk', 'name', 'slug')
     search_fields = ('name', 'slug')
     list_editable = ('name', 'slug')
 
 
+@admin.register(Genre)
 class GenreAdmin(admin.ModelAdmin):
     list_display = ('pk', 'name', 'slug')
     search_fields = ('name', 'slug')
     list_editable = ('name', 'slug')
 
 
+@admin.register(Title)
 class TitlesAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'name', 'year', 'category')
-    search_fields = ('name', 'category')
-    list_editable = ('name', 'category')
+    list_display = ('pk', 'name', 'year', 'get_genres_list', 'category')
+    search_fields = ('name', 'category__name')
+
+    def get_genres_list(self, title):
+        return ', '.join(genre.name for genre in title.genres.all())
+    get_genres_list.short_description = _('Жанры')
 
 
+@admin.register(Review)
 class ReviewsAdmin(admin.ModelAdmin):
     list_display = ('pk', 'title', 'text', 'author', 'score', 'pub_date')
     search_fields = ('text',)
     list_editable = ('text', 'author', 'score')
 
 
+@admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
     list_display = ('pk', 'reviews', 'author', 'text', 'pub_date')
     search_fields = ('text',)
     list_editable = ('text', 'author')
-
-
-admin.site.register(Category, CategoryAdmin)
-admin.site.register(Genre, GenreAdmin)
-admin.site.register(Title, TitlesAdmin)
-admin.site.register(Comment, CommentAdmin)
-admin.site.register(Review, ReviewsAdmin)

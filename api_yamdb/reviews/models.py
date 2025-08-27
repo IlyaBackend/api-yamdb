@@ -1,57 +1,59 @@
-from datetime import datetime
-
+from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from users.models import CustomUser
+from api_yamdb.constants import (CATEGORY_GENRE_MAX_LENGTH, RATING_MAX_VALUE,
+                                 RATING_MIN_VALUE, STR_LENGTH)
 
-User = CustomUser
+from .validators import validate_year_not_future
 
-STR_LENGTH = 20
-
-
-class Category(models.Model):
-    """ Модель категорий. """
-    name = models.CharField(max_length=256, verbose_name='Название категории')
-    slug = models.SlugField(unique=True, verbose_name='Слаг категории')
-
-    class Meta:
-        verbose_name = 'Категория'
-        verbose_name_plural = 'Категории'
-        ordering = ('name',)
-
-    def __str__(self):
-        return f'{self.name}'
+User = get_user_model()
 
 
-class Genre(models.Model):
-    """ Модель Жанры """
-    name = models.CharField(max_length=256, verbose_name='Название жанра')
-    slug = models.SlugField(unique=True, verbose_name='Слаг жанра')
+class CategoryGenreBase(models.Model):
+
+    """Абстрактная модель для категорий и жанров."""
+    name = models.CharField(
+        max_length=CATEGORY_GENRE_MAX_LENGTH,
+        verbose_name='Название'
+    )
+    slug = models.SlugField(unique=True, verbose_name='Слаг')
 
     class Meta:
-        verbose_name = 'Жанр'
-        verbose_name_plural = 'Жанры'
+        abstract = True
         ordering = ('name',)
 
     def __str__(self):
         return self.name
 
 
+class Category(CategoryGenreBase):
+
+    """Модель категорий."""
+    class Meta(CategoryGenreBase.Meta):
+        verbose_name = 'Категория'
+        verbose_name_plural = 'Категории'
+
+
+class Genre(CategoryGenreBase):
+
+    """Модель жанров."""
+    class Meta(CategoryGenreBase.Meta):
+        verbose_name = 'Жанр'
+        verbose_name_plural = 'Жанры'
+
+
 class Title(models.Model):
+
     """ Модель произведений """
     name = models.CharField(
         max_length=256,
         verbose_name='Название произведения'
     )
 
-    year = models.PositiveIntegerField(
+    year = models.IntegerField(
         verbose_name='Год выпуска',
-        validators=[
-            MaxValueValidator(
-                datetime.now().year,
-                message='Год не должен быть больше текущего')
-        ],
+        validators=[validate_year_not_future],
     )
     description = models.TextField(
         blank=True,
@@ -76,11 +78,11 @@ class Title(models.Model):
         default_related_name = 'titles'
 
     def __str__(self):
-        return (self.name[:STR_LENGTH] + '...'
-                if len(self.name) > STR_LENGTH else self.name)
+        return (self.name[:STR_LENGTH])
 
 
 class TitleGenre(models.Model):
+
     """ Модель связывающая произведения и жанры """
     title = models.ForeignKey(
         Title,
@@ -107,52 +109,73 @@ class TitleGenre(models.Model):
         return f'{self.title}-{self.genre}'
 
 
-class Review(models.Model):
-    """Модель отзыва на произведение."""
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
-    title = models.ForeignKey(
-        Title, on_delete=models.CASCADE, verbose_name='Произведение'
+class AuthorContentModel(models.Model):
+
+    """Абстрактная базовая модель с текстом, автором и датой публикации."""
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Автор'
     )
-    text = models.TextField(null=True, blank=True, verbose_name='Отзыв')
-    score = models.IntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(10)],
-        verbose_name='Оценка произведения'
-    )
+    text = models.TextField(verbose_name='Текст')
     pub_date = models.DateTimeField(
-        'Дата добавления отзыва', auto_now_add=True
+        'Дата добавления',
+        auto_now_add=True,
+        db_index=True
     )
 
     class Meta:
-        constraints = [models.UniqueConstraint(
-            fields=['author', 'title'], name='unique_review'),]
-        ordering = ('pub_date',)
+        abstract = True
+        ordering = ('-pub_date',)
+
+    def __str__(self):
+        return self.text[:STR_LENGTH]
+
+
+class Review(AuthorContentModel):
+
+    """Модель отзыва на произведение."""
+    title = models.ForeignKey(
+        Title,
+        on_delete=models.CASCADE,
+        verbose_name='Произведение'
+    )
+    score = models.PositiveSmallIntegerField(
+        validators=[
+            MinValueValidator(RATING_MIN_VALUE),
+            MaxValueValidator(RATING_MAX_VALUE)
+        ],
+        verbose_name='Оценка произведения'
+    )
+
+    class Meta(AuthorContentModel.Meta):
+        constraints = [
+            models.UniqueConstraint(
+                fields=['author', 'title'],
+                name='unique_review'
+            )
+        ]
         verbose_name = 'отзыв'
         verbose_name_plural = 'Отзывы'
         default_related_name = 'reviews'
 
     def __str__(self):
         return (
-            f'Отзыв {self.author.username} на {self.title}.'
-            f'{self.text}. Оценка: {self.score}.'
+            f'Отзыв {self.author.username} на {self.title}. '
+            f'Оценка: {self.score}.'
         )
 
 
-class Comment(models.Model):
+class Comment(AuthorContentModel):
+
     """Модель комментария к отзыву на произведение."""
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
-    reviews = models.ForeignKey(Review, on_delete=models.CASCADE)
-    text = models.TextField(
-        null=False, blank=False, verbose_name='Комментарий'
-    )
-    pub_date = models.DateTimeField(
-        'Дата добавления комментария', auto_now_add=True
+    reviews = models.ForeignKey(
+        Review,
+        on_delete=models.CASCADE,
+        verbose_name='Обзор'
     )
 
-    class Meta:
-        ordering = ('pub_date',)
+    class Meta(AuthorContentModel.Meta):
         verbose_name = 'комментарий'
         verbose_name_plural = 'Комментарии'
         default_related_name = 'comments'
-
-    def __str__(self):
-        return self.text[:STR_LENGTH]

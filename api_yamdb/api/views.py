@@ -6,7 +6,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.filters import SearchFilter
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
@@ -16,6 +15,7 @@ from api_yamdb.constants import MY_USER_PROFILE
 from reviews.models import Category, Genre, Review, Title, User
 
 from .filters import TitleFilters
+from .pagination import StandardPagination
 from .permissions import (IsAdmin, IsAdminOrReadOnly,
                           IsAuthorAdminModeratorOrReadOnly)
 from .serializers import (AdminUserSerializer, CategorySerializer,
@@ -23,12 +23,6 @@ from .serializers import (AdminUserSerializer, CategorySerializer,
                           ReviewsSerializer, TitleCRUDSerializer,
                           TitleSerializer, TokenSerializer,
                           UserSignUpSerializer)
-
-
-class StandardPagination(PageNumberPagination):
-    page_size = 10
-    page_size_query_param = 'page_size'
-    max_page_size = 100
 
 
 class CreateListDestroyViewSet(
@@ -57,6 +51,11 @@ class UserViewSet(viewsets.ModelViewSet):
     filter_backends = (SearchFilter,)
     search_fields = ('username',)
     http_method_names = ['get', 'post', 'patch', 'delete']
+
+    def get_object(self):
+        if self.kwargs.get(self.lookup_field) == MY_USER_PROFILE:
+            return self.request.user
+        return super().get_object()
 
     @action(
         methods=['get', 'patch'],
@@ -89,6 +88,7 @@ def signup(request):
     serializer = UserSignUpSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     user = serializer.save()
+    print('>>>', serializer.data)
     confirmation_code = user.generate_confirmation_code()
     send_mail(
         subject='Yamdb confirmation code',
@@ -113,31 +113,40 @@ def get_token(request):
     )
 
 
-class CategoryViewSet(CreateListDestroyViewSet):
+class CategoryGenreBaseViewSet(CreateListDestroyViewSet):
 
-    """Класс для управления категориями"""
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
+    """Базовый ViewSet для категорий и жанров"""
+
     permission_classes = (IsAdminOrReadOnly,)
     search_fields = ('name',)
     lookup_field = 'slug'
 
 
-class GenreViewSet(CreateListDestroyViewSet):
+class CategoryViewSet(CategoryGenreBaseViewSet):
+
+    """Класс для управления категориями"""
+
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+
+
+class GenreViewSet(CategoryGenreBaseViewSet):
 
     """Класс для управления жанрами"""
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = (IsAdminOrReadOnly,)
-    search_fields = ('name',)
-    lookup_field = 'slug'
 
 
 class TitleViewSet(viewsets.ModelViewSet):
 
     """Класс для управления произведениями"""
-    queryset = Title.objects.annotate(
-        score=Avg('reviews__score')).all().order_by('-year', 'name',)
+    queryset = (
+        Title.objects
+        .annotate(rating=Avg('reviews__score'))
+        .select_related('category')
+        .prefetch_related('genre')
+        .order_by('-year', 'name')
+    )
     pagination_class = StandardPagination
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter, DjangoFilterBackend)
@@ -146,16 +155,18 @@ class TitleViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     def get_serializer_class(self):
+        SAFE_METHODS = ('GET', 'HEAD', 'OPTIONS')
         return (
-            TitleCRUDSerializer
-            if self.action in ('create', 'partial_update', 'update')
-            else TitleSerializer
+            TitleSerializer
+            if self.request.method in SAFE_METHODS
+            else TitleCRUDSerializer
         )
 
 
 class ReviewsViewSet(viewsets.ModelViewSet):
 
     """Класс для управления отзывов на произведения."""
+
     serializer_class = ReviewsSerializer
     permission_classes = (
         IsAuthenticatedOrReadOnly, IsAuthorAdminModeratorOrReadOnly

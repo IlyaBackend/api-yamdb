@@ -1,10 +1,10 @@
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.tokens import default_token_generator
+from django.core.exceptions import ValidationError
 from django.db import models
-from rest_framework import serializers
 
-from api_yamdb.constants import (EMAIL_MAX_LENGTH, ROLE_CHOICES,
-                                 ROLE_MAX_LENGTH, ROLE_USER)
+from api_yamdb.constants import (EMAIL_MAX_LENGTH, MY_USER_PROFILE,
+                                 ROLE_CHOICES, ROLE_MAX_LENGTH, ROLE_USER)
 
 
 class Account(AbstractUser):
@@ -29,6 +29,7 @@ class Account(AbstractUser):
     )
 
     def save(self, *args, **kwargs):
+        self.clean()
         if self.is_staff and self.role != 'moderator':
             self.role = 'admin'
         super().save(*args, **kwargs)
@@ -50,16 +51,16 @@ class Account(AbstractUser):
         """
         return default_token_generator.check_token(self, token)
 
+    def clean(self):
+        super().clean()
+        if self.username == MY_USER_PROFILE:
+            raise ValidationError({
+                'username': 'Нельзя использовать "me" в качестве username'
+            })
+
     @property
     def is_moderator(self):
         return self.role == 'moderator'
 
     def is_admin(self):
         return self.role == 'admin' or self.is_staff
-
-    def validate_username(self, value):
-        if value == 'me':
-            raise serializers.ValidationError(
-                'Нельзя использовать "me" в качестве username'
-            )
-        return value

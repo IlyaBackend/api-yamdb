@@ -1,9 +1,11 @@
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from api_yamdb.constants import (EMAIL_MAX_LENGTH, FIRST_NAME_MAX_LENGTH,
                                  LAST_NAME_MAX_LENGTH, MY_USER_PROFILE,
+                                 RATING_MAX_VALUE, RATING_MIN_VALUE,
                                  REGULAR_USERNAME, USERNAME_MAX_LENGTH)
 from reviews.models import Category, Comment, Genre, Review, Title, User
 
@@ -28,13 +30,14 @@ class UserSignUpSerializer(serializers.ModelSerializer):
         model = User
         fields = ('username', 'email')
 
+    def create(self, validated_data):
+        user, _ = User.objects.get_or_create(**validated_data)
+        return user
+
     def validate(self, attrs):
         username = attrs.get('username')
         email = attrs.get('email')
-        if username == MY_USER_PROFILE:
-            raise serializers.ValidationError({
-                'username': 'Недопуститмый username'
-            })
+        User(**attrs).clean()
         user_by_username = User.objects.filter(username=username).first()
         user_by_email = User.objects.filter(email=email).first()
         if (user_by_email and user_by_email.username != username) and (
@@ -53,10 +56,6 @@ class UserSignUpSerializer(serializers.ModelSerializer):
                 'email': 'email занят другим пользователем'
             })
         return attrs
-
-    def create(self, validated_data):
-        user, _ = User.objects.get_or_create(**validated_data)
-        return user
 
 
 class AdminUserSerializer(serializers.ModelSerializer):
@@ -90,7 +89,13 @@ class AdminUserSerializer(serializers.ModelSerializer):
         )
 
     def update(self, instance, validated_data):
-        if self.context.get('view') and self.context['view'].action == 'me':
+        if validated_data.get('username') == 'me':
+            raise serializers.ValidationError({
+                'username': 'Нельзя использовать "me" в качестве username'
+            })
+        if self.context.get('view') and (
+                self.context['view'].action == MY_USER_PROFILE
+        ):
             validated_data.pop('role', None)
         return super().update(instance, validated_data)
 
@@ -126,7 +131,6 @@ class TokenSerializer(serializers.Serializer):
 class CategorySerializer(serializers.ModelSerializer):
 
     """Сериализатор для категорий."""
-
     class Meta:
         exclude = ('id',)
         model = Category
@@ -135,7 +139,6 @@ class CategorySerializer(serializers.ModelSerializer):
 class GenreSerializer(serializers.ModelSerializer):
 
     """Сериализатор для жанров."""
-
     class Meta:
         model = Genre
         exclude = ('id',)
@@ -146,21 +149,13 @@ class TitleSerializer(serializers.ModelSerializer):
     """Сериализатор для произведений."""
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(many=True, read_only=True)
-    rating = serializers.SerializerMethodField(read_only=True)
+    rating = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Title
         fields = [
             'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
         ]
-
-    def get_rating(self, title):
-        """
-        Возвращает среднюю оценку произведения
-        или сообщение об отсутствии отзывов.
-        """
-        avg_score = getattr(title, 'score', None)
-        return round(avg_score) if avg_score is not None else None
 
 
 class TitleCRUDSerializer(serializers.ModelSerializer):
@@ -169,25 +164,29 @@ class TitleCRUDSerializer(serializers.ModelSerializer):
     genre = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Genre.objects.all(),
-        many=True
+        many=True,
+        required=True,
+        allow_empty=False
     )
     category = serializers.SlugRelatedField(
         slug_field='slug',
-        queryset=Category.objects.all()
+        queryset=Category.objects.all(),
+        required=True
     )
 
     class Meta:
-        fields = ('__all__')
+        fields = '__all__'
         model = Title
-
-    def validate_genre(self, value):
-        """Валидация жанров"""
-        if not value or len(value) == 0:
-            raise serializers.ValidationError('Жанры не могут быть пустыми')
-        return value
 
     def to_representation(self, instance):
         """Сериализует объект через TitleSerializer."""
+        instance = (
+            Title.objects
+            .annotate(rating=Avg('reviews__score'))
+            .select_related('category')
+            .prefetch_related('genre')
+            .get(pk=instance.pk)
+        )
         return TitleSerializer(instance, context=self.context).data
 
 
@@ -203,7 +202,6 @@ class ReviewsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = ('id', 'text', 'score', 'author', 'pub_date',)
-        read_only_fields = ('author', 'pub_date', 'title')
 
     def validate(self, data):
         request = self.context['request']
@@ -219,12 +217,16 @@ class ReviewsSerializer(serializers.ModelSerializer):
         return data
 
     def validate_score(self, value):
-        if not 1 <= value <= 10:
-            raise serializers.ValidationError('Оценка должна быть от 1 до 10.')
+        if not RATING_MIN_VALUE <= value <= RATING_MAX_VALUE:
+            raise serializers.ValidationError(
+                f'Оценка должна быть от {self.RATING_MIN_VALUE} '
+                f'до {self.RATING_MAX_VALUE}.'
+            )
         return value
 
 
 class CommentSerializer(serializers.ModelSerializer):
+
     """Сериализатор для комментариев к отзывам на произведения."""
     author = serializers.SlugRelatedField(
         read_only=True, slug_field='username'
@@ -233,4 +235,3 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta():
         model = Comment
         fields = ('id', 'text', 'author', 'pub_date')
-        read_only_fields = ('author', 'reviews')

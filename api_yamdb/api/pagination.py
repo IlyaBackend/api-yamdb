@@ -1,6 +1,6 @@
 from rest_framework.pagination import PageNumberPagination
-from .constants import PAGE_SIZE, MAX_PAGE_SIZE
 
+from api_yamdb.constants import MAX_PAGE_SIZE, PAGE_SIZE
 
 class StandardPagination(PageNumberPagination):
     page_size = PAGE_SIZE

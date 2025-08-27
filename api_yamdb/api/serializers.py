@@ -1,7 +1,132 @@
+from django.db.models import Avg
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
-from reviews.models import Category, Comment, Genre, Review, Title
-from .constants import RATING_MIN_VALUE, RATING_MAX_VALUE
+from api_yamdb.constants import (EMAIL_MAX_LENGTH, FIRST_NAME_MAX_LENGTH,
+                                 LAST_NAME_MAX_LENGTH, MY_USER_PROFILE,
+                                 RATING_MAX_VALUE, RATING_MIN_VALUE,
+                                 REGULAR_USERNAME, USERNAME_MAX_LENGTH)
+from reviews.models import Category, Comment, Genre, Review, Title, User
+
+
+class UserSignUpSerializer(serializers.ModelSerializer):
+
+    """
+    Сериализатор для регистрации нового пользователя.
+    Принимает только username и email
+    """
+    username = serializers.RegexField(
+        REGULAR_USERNAME,
+        required=True,
+        max_length=USERNAME_MAX_LENGTH,
+    )
+    email = serializers.EmailField(
+        required=True,
+        max_length=EMAIL_MAX_LENGTH,
+    )
+
+    class Meta:
+        model = User
+        fields = ('username', 'email')
+
+    def create(self, validated_data):
+        user, _ = User.objects.get_or_create(**validated_data)
+        return user
+
+    def validate(self, attrs):
+        username = attrs.get('username')
+        email = attrs.get('email')
+        User(**attrs).clean()
+        user_by_username = User.objects.filter(username=username).first()
+        user_by_email = User.objects.filter(email=email).first()
+        if (user_by_email and user_by_email.username != username) and (
+            user_by_username and user_by_username.email != email
+        ):
+            raise serializers.ValidationError({
+                'username': 'username занят другим пользователем',
+                'email': 'email занят другим пользователем'
+            })
+        if user_by_username and user_by_username.email != email:
+            raise serializers.ValidationError({
+                'username': 'username занят другим пользователем'
+            })
+        if user_by_email and user_by_email.username != username:
+            raise serializers.ValidationError({
+                'email': 'email занят другим пользователем'
+            })
+        return attrs
+
+
+class AdminUserSerializer(serializers.ModelSerializer):
+
+    """
+    Сериализатор для администратора.
+    Админ может создавать пользователей и назначать им роль.
+    """
+    first_name = serializers.CharField(
+        required=False,
+        max_length=FIRST_NAME_MAX_LENGTH,
+        allow_blank=True,
+        default=''
+    )
+    last_name = serializers.CharField(
+        required=False,
+        max_length=LAST_NAME_MAX_LENGTH,
+        allow_blank=True,
+        default=''
+    )
+    bio = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        default=''
+    )
+
+    class Meta:
+        model = User
+        fields = (
+            'username', 'email', 'first_name', 'last_name', 'bio', 'role'
+        )
+
+    def update(self, instance, validated_data):
+        if validated_data.get('username') == 'me':
+            raise serializers.ValidationError({
+                'username': 'Нельзя использовать "me" в качестве username'
+            })
+        if self.context.get('view') and (
+                self.context['view'].action == MY_USER_PROFILE
+        ):
+            validated_data.pop('role', None)
+        return super().update(instance, validated_data)
+
+
+class TokenSerializer(serializers.Serializer):
+
+    """
+    Сериализатор для валидации username, confirmation_code
+    и последующего создания токена.
+    """
+    username = serializers.CharField(
+        max_length=USERNAME_MAX_LENGTH,
+        required=True
+    )
+    confirmation_code = serializers.CharField(max_length=255, required=True)
+
+    def validate(self, data):
+        username = data.get('username')
+        confirmation_code = data.get('confirmation_code')
+        if not username or not confirmation_code:
+            raise ValidationError(
+                {'error': '"username" и "confirmation_code" обязательны'}
+            )
+        user = get_object_or_404(User, username=username)
+        if not user.check_confirmation_code(confirmation_code):
+            raise ValidationError(
+                {'error': 'Код подтверждения неверен.'}
+            )
+        self.context['user'] = user
+        return data
+
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -25,7 +150,9 @@ class TitleSerializer(serializers.ModelSerializer):
 
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(many=True, read_only=True)
-    rating = serializers.IntegerField(read_only=True)
+
+    rating = serializers.IntegerField(read_only=True, default=None)
+
 
     class Meta:
         model = Title
@@ -33,17 +160,11 @@ class TitleSerializer(serializers.ModelSerializer):
             'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
         ]
 
-    def get_rating(self, title):
-        """
-        Возвращает среднюю оценку произведения
-        или сообщение об отсутствии отзывов.
-        """
-        avg_score = getattr(title, 'score', None)
-        return round(avg_score) if avg_score is not None else None
-
 
 class TitleCRUDSerializer(serializers.ModelSerializer):
-    """Сериализатор для создания, обновления, обработки данных"""
+
+    """Сериализатор для создания, обновления, обработки данных."""
+
 
     genre = serializers.SlugRelatedField(
         slug_field='slug',
@@ -65,6 +186,14 @@ class TitleCRUDSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         """Сериализует объект через TitleSerializer."""
 
+        instance = (
+            Title.objects
+            .annotate(rating=Avg('reviews__score'))
+            .select_related('category')
+            .prefetch_related('genre')
+            .get(pk=instance.pk)
+        )
+
         return TitleSerializer(instance, context=self.context).data
 
 
@@ -76,10 +205,15 @@ class ReviewsSerializer(serializers.ModelSerializer):
         slug_field='username',
         default=serializers.CurrentUserDefault()
     )
+    score = serializers.IntegerField(
+        min_value=RATING_MIN_VALUE, max_value=RATING_MAX_VALUE
+    )
 
     class Meta:
         model = Review
-        fields = ('id', 'text', 'score', 'author', 'pub_date',)
+
+        fields = ('id', 'text', 'score', 'author', 'pub_date')
+
 
     def validate(self, data):
         request = self.context['request']

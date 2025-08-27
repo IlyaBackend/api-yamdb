@@ -9,9 +9,9 @@ class IsAdminOrReadOnly(BasePermission):
         user = request.user
         return request.method in SAFE_METHODS or (
             user.is_authenticated and (
-                getattr(user, 'role', None) == 'admin'
-                or getattr(user, 'is_staff', False)
-                or getattr(user, 'is_superuser', False)
+                user.role == 'admin'
+                or user.is_staff
+                or user.is_superuser
             ))
 
 
@@ -20,14 +20,11 @@ class IsAuthorAdminModeratorOrReadOnly(BasePermission):
     Изменения только автору, модератору, администратору.
     Остальным безопасные методы.
     """
-    def has_permission(self, request, view):
-        return request.method in SAFE_METHODS or request.user.is_authenticated
-
     def has_object_permission(self, request, view, obj):
         user = request.user
         return request.method in SAFE_METHODS or (
             obj.author == user
-            or getattr(user, 'role', None) == 'admin'
-            or getattr(user, 'role', None) == 'moderator'
-            or getattr(user, 'role', None) == 'superuser'
+            or user.role == 'admin'
+            or user.role == 'moderator'
+            or user.is_superuser
         )

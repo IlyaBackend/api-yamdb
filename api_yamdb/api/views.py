@@ -54,7 +54,7 @@ class GenreViewSet(CategoryGenreBaseViewSet):
     serializer_class = GenreSerializer
 
 
-class TitleViewSet(viewsets.ModelViewSet):
+class TitleViewSet(viewsets.ModelViewSet):z
     """Класс для управления произведениями"""
 
     queryset = (

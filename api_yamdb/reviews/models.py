@@ -140,7 +140,7 @@ class Review(AuthorContentModel):
     """Модель отзыва на произведение."""
 
     title = models.ForeignKey(
-        Title, 
+        Title,
         on_delete=models.CASCADE,
         verbose_name='Произведение'
     )

@@ -2,10 +2,12 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
+
 from api_yamdb.constants import (
     CATEGORY_GENRE_MAX_LENGTH, RATING_MAX_VALUE, RATING_MIN_VALUE, STR_LENGTH
 )
 from .validators import validate_year_not_future
+
 
 User = get_user_model()
 
@@ -15,6 +17,7 @@ class CategoryGenreBase(models.Model):
 
     name = models.CharField(
         max_length=CATEGORY_GENRE_MAX_LENGTH,
+
         verbose_name='Название'
     )
     slug = models.SlugField(unique=True, verbose_name='Слаг')
@@ -44,7 +47,9 @@ class Genre(CategoryGenreBase):
 
 
 class Title(models.Model):
+
     """ Модель произведений."""
+
 
     name = models.CharField(
         max_length=256,
@@ -82,7 +87,9 @@ class Title(models.Model):
 
 
 class TitleGenre(models.Model):
+
     """ Модель связывающая произведения и жанры."""
+
 
     title = models.ForeignKey(
         Title,
@@ -136,7 +143,9 @@ class Review(AuthorContentModel):
     """Модель отзыва на произведение."""
 
     title = models.ForeignKey(
+
         Title,
+
         on_delete=models.CASCADE,
         verbose_name='Произведение'
     )

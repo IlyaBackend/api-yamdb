@@ -8,6 +8,7 @@ def validate_year_not_future(value):
     Валидатор для проверки, что год не больше текущего.
     Вызывается при каждой проверке поля.
     '''
+
     current_year = timezone.now().year
     if value > current_year:
         raise ValidationError(

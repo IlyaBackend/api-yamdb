@@ -1,16 +1,16 @@
 from datetime import datetime
 
+from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from users.models import CustomUser
-
-User = CustomUser
+User = get_user_model()
 
 STR_LENGTH = 20
 
 
 class Category(models.Model):
+
     """ Модель категорий. """
     name = models.CharField(max_length=256, verbose_name='Название категории')
     slug = models.SlugField(unique=True, verbose_name='Слаг категории')
@@ -25,6 +25,7 @@ class Category(models.Model):
 
 
 class Genre(models.Model):
+
     """ Модель Жанры """
     name = models.CharField(max_length=256, verbose_name='Название жанра')
     slug = models.SlugField(unique=True, verbose_name='Слаг жанра')
@@ -39,6 +40,7 @@ class Genre(models.Model):
 
 
 class Title(models.Model):
+
     """ Модель произведений """
     name = models.CharField(
         max_length=256,
@@ -80,6 +82,7 @@ class Title(models.Model):
 
 
 class TitleGenre(models.Model):
+
     """ Модель связывающая произведения и жанры """
     title = models.ForeignKey(
         Title,
@@ -107,6 +110,7 @@ class TitleGenre(models.Model):
 
 
 class Review(models.Model):
+
     """Модель отзыва на произведение."""
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.ForeignKey(
@@ -137,6 +141,7 @@ class Review(models.Model):
 
 
 class Comment(models.Model):
+
     """Модель комментария к отзыву на произведение."""
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     reviews = models.ForeignKey(Review, on_delete=models.CASCADE)

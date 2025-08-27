@@ -2,12 +2,12 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 from reviews.models import Category, Comment, Genre, Review, Title
-from users.models import CustomUser
+from users.models import Account
 
 
-@admin.register(CustomUser)
-class CustomUserAdmin(UserAdmin):
-    model = CustomUser
+@admin.register(Account)
+class AccountAdmin(UserAdmin):
+    model = Account
     list_display = ('username', 'email', 'role', 'is_staff', 'is_active')
     list_filter = ('role', 'is_staff', 'is_active')
     search_fields = ('username', 'email')

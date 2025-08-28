@@ -79,6 +79,14 @@ python manage.py createsuperuser
 # Запустить проект
 python manage.py runserver
 
+Наполнение базы данных тестовыми данными из CSV
+
+# В проекте есть management-команда для импорта данных из CSV файлов (категории, жанры, произведения, пользователи, отзывы и комментарии).
+# Запуск команды наполнения из директории проекта:
+
+python manage.py import_csv
+
+
 ##  Авторы
 
 - [AlekseyGusev157](https://github.com/AlekseyGusev157) — разработка логики отзывов и комментариев

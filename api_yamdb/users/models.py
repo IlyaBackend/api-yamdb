@@ -11,7 +11,7 @@ from .validators import username_validator, validate_username
 
 
 class Account(AbstractUser):
-    """Кастомная моедль пользователя"""
+    """Кастомная моедль пользователя."""
 
     username = models.CharField(
         max_length=USERNAME_MAX_LENGTH,
@@ -55,15 +55,11 @@ class Account(AbstractUser):
             })
 
     def generate_confirmation_code(self):
-        """
-        Генерирует и возвращает токен подтверждения для пользователя.
-        """
+        """Генерирует одноразовый код подтверждения для пользователя."""
         return default_token_generator.make_token(self)
 
     def check_confirmation_code(self, token):
-        """
-        Проверяет, является ли переданный токен действительным.
-        """
+        """Проверяет, является ли переданный токен действительным."""
         return default_token_generator.check_token(self, token)
 
     @property
@@ -72,4 +68,3 @@ class Account(AbstractUser):
 
     def is_admin(self):
         return self.role == ROLE_ADMIN or self.is_staff
-

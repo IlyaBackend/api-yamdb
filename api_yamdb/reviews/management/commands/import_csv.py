@@ -1,11 +1,11 @@
 import csv
 import os
 
-from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
+from django.core.management.base import BaseCommand
 
-from reviews.models import Category, Genre, Title, Review, Comment, TitleGenre
 from api_yamdb.settings import BASE_DIR
+from reviews.models import Category, Comment, Genre, Review, Title, TitleGenre
 
 User = get_user_model()
 
@@ -31,7 +31,6 @@ class Command(BaseCommand):
 
     def import_model(self, model, filename):
         """Импортирует данные для одной модели."""
-
         filepath = os.path.join(BASE_DIR, 'static', 'data', filename)
 
         try:
@@ -51,7 +50,7 @@ class Command(BaseCommand):
         field_mappings = {
             Title: {'category': 'category_id'},
             Review: {'author': 'author_id', 'title': 'title_id'},
-            Comment: {'author': 'author_id', 'review': 'review_id'},
+            Comment: {'author': 'author_id', 'review_id': 'reviews_id'},
         }
 
         mapping = field_mappings.get(model, {})

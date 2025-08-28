@@ -48,7 +48,6 @@ class TitlesAdmin(admin.ModelAdmin):
         return ', '.join(genre.name for genre in title.genres.all())
 
 
-
 @admin.register(Review)
 class ReviewsAdmin(admin.ModelAdmin):
     list_display = ('pk', 'title', 'text', 'author', 'score', 'pub_date')

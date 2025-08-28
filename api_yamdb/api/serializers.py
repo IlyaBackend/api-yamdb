@@ -1,4 +1,3 @@
-from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -14,7 +13,7 @@ class UserSignUpSerializer(serializers.ModelSerializer):
     """
     Сериализатор для регистрации нового пользователя.
 
-    Принимает только username и email
+    Принимает только username и email.
     """
 
     username = serializers.RegexField(
@@ -89,10 +88,8 @@ class TokenSerializer(serializers.Serializer):
     )
 
     def validate(self, data):
-        username = data.get('username')
-        confirmation_code = data.get('confirmation_code')
-        user = get_object_or_404(User, username=username)
-        if not user.check_confirmation_code(confirmation_code):
+        user = get_object_or_404(User, username=data.get('username'))
+        if not user.check_confirmation_code(data.get('confirmation_code')):
             raise ValidationError(
                 {'error': 'Код подтверждения неверен.'}
             )
@@ -152,7 +149,6 @@ class TitleCRUDSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         """Сериализует объект через TitleSerializer."""
-
         return TitleSerializer(instance, context=self.context).data
 
 
@@ -174,11 +170,11 @@ class ReviewsSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         request = self.context['request']
-        title_id = self.context['view'].kwargs.get('title_id')
 
         if request.method == 'POST':
             if Review.objects.filter(
-                author=request.user, title_id=title_id
+                author=request.user,
+                title_id=self.context['view'].kwargs.get('title_id')
             ).exists():
                 raise serializers.ValidationError(
                     'Вы уже оставляли отзыв на это произведение.'

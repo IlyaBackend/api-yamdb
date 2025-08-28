@@ -2,11 +2,11 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from api_yamdb.constants import (CATEGORY_GENRE_MAX_LENGTH, RATING_MAX_VALUE, TITLE_NAME_MAX_LENGH,
-                                 RATING_MIN_VALUE, STR_LENGTH)
+from api_yamdb.constants import (CATEGORY_GENRE_MAX_LENGTH, RATING_MAX_VALUE,
+                                 RATING_MIN_VALUE, STR_LENGTH,
+                                 TITLE_NAME_MAX_LENGH)
 
 from .validators import validate_year_not_future
-
 
 User = get_user_model()
 

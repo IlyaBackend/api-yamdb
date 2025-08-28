@@ -2,19 +2,25 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from api_yamdb.constants import (CATEGORY_GENRE_MAX_LENGTH, RATING_MAX_VALUE,
-                                 RATING_MIN_VALUE, STR_LENGTH)
-
+from api.constants import MAX_LENGTH
+from api_yamdb.constants import (
+    CATEGORY_GENRE_MAX_LENGTH,
+    RATING_MAX_VALUE,
+    RATING_MIN_VALUE,
+    STR_LENGTH,
+)
 from .validators import validate_year_not_future
+
 
 User = get_user_model()
 
 
 class CategoryGenreBase(models.Model):
-
     """Абстрактная модель для категорий и жанров."""
+
     name = models.CharField(
         max_length=CATEGORY_GENRE_MAX_LENGTH,
+
         verbose_name='Название'
     )
     slug = models.SlugField(unique=True, verbose_name='Слаг')
@@ -28,30 +34,30 @@ class CategoryGenreBase(models.Model):
 
 
 class Category(CategoryGenreBase):
-
     """Модель категорий."""
+
     class Meta(CategoryGenreBase.Meta):
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
 
 
 class Genre(CategoryGenreBase):
-
     """Модель жанров."""
+
     class Meta(CategoryGenreBase.Meta):
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
 
 
 class Title(models.Model):
+    """ Модель произведений."""
 
-    """ Модель произведений """
     name = models.CharField(
-        max_length=256,
+        max_length=MAX_LENGTH,
         verbose_name='Название произведения'
     )
 
-    year = models.IntegerField(
+    year = models.SmallIntegerField(
         verbose_name='Год выпуска',
         validators=[validate_year_not_future],
     )
@@ -82,8 +88,8 @@ class Title(models.Model):
 
 
 class TitleGenre(models.Model):
+    """ Модель связывающая произведения и жанры."""
 
-    """ Модель связывающая произведения и жанры """
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
@@ -110,8 +116,8 @@ class TitleGenre(models.Model):
 
 
 class AuthorContentModel(models.Model):
-
     """Абстрактная базовая модель с текстом, автором и датой публикации."""
+
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -133,10 +139,12 @@ class AuthorContentModel(models.Model):
 
 
 class Review(AuthorContentModel):
-
     """Модель отзыва на произведение."""
+
     title = models.ForeignKey(
+
         Title,
+
         on_delete=models.CASCADE,
         verbose_name='Произведение'
     )
@@ -167,8 +175,8 @@ class Review(AuthorContentModel):
 
 
 class Comment(AuthorContentModel):
-
     """Модель комментария к отзыву на произведение."""
+
     reviews = models.ForeignKey(
         Review,
         on_delete=models.CASCADE,

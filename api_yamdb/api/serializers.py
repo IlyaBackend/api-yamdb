@@ -170,7 +170,6 @@ class ReviewsSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         request = self.context['request']
-
         if request.method == 'POST':
             if Review.objects.filter(
                 author=request.user,

@@ -72,3 +72,4 @@ class Account(AbstractUser):
 
     def is_admin(self):
         return self.role == ROLE_ADMIN or self.is_staff
+

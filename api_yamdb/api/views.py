@@ -3,6 +3,7 @@ from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import (SAFE_METHODS, AllowAny,
@@ -10,10 +11,22 @@ from rest_framework.permissions import (SAFE_METHODS, AllowAny,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework import filters, mixins, viewsets
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
+from .filters import TitleFilters
+from .pagination import StandardPagination
+from .permissions import IsAdminOrReadOnly, IsAuthorAdminModeratorOrReadOnly
+from .serializers import (
+    CategorySerializer,
+    CommentSerializer,
+    GenreSerializer,
+    ReviewsSerializer,
+    TitleSerializer,
+    TitleCRUDSerializer,
+)
 from api_yamdb.constants import MY_USER_PROFILE, ROLE_USER
 from reviews.models import Category, Genre, Review, Title, User
-
 from .filters import TitleFilters
 from .pagination import StandardPagination
 from .permissions import (IsAdmin, IsAdminOrReadOnly,
@@ -31,18 +44,14 @@ class CreateListDestroyViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
-    """
-    Базовый вьюсет для категорий и жанров
-    """
+    """Базовый вьюсет для категорий и жанров."""
 
     pagination_class = StandardPagination
     filter_backends = (filters.SearchFilter,)
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    """
-    Класс полностью отвечает за управление пользователями и аутентификацикей
-    """
+    """Класс отвечает за управление пользователями и аутентификацией."""
 
     queryset = User.objects.all().order_by('id', 'username')
     serializer_class = AdminUserSerializer
@@ -59,9 +68,8 @@ class UserViewSet(viewsets.ModelViewSet):
         url_path=MY_USER_PROFILE
     )
     def me(self, request):
-        """
-        Просмотр и редактирование своего профиля
-        """
+        """Просмотр и редактирование своего профиля."""
+
         user = request.user
         if request.method == 'GET':
             return Response(AdminUserSerializer(user).data)
@@ -79,9 +87,8 @@ class UserViewSet(viewsets.ModelViewSet):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def signup(request):
-    """
-    регистрация пользователя и кода
-    """
+    """Регистрация пользователя и кода."""
+
     serializer = UserSignUpSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     user = serializer.save()
@@ -98,9 +105,8 @@ def signup(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def get_token(request):
-    """
-    Выдача токена по username и коду
-    """
+    """Выдача токена по username и коду."""
+
     serializer = TokenSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     return Response(
@@ -112,8 +118,7 @@ def get_token(request):
 
 
 class CategoryGenreBaseViewSet(CreateListDestroyViewSet):
-
-    """Базовый ViewSet для категорий и жанров"""
+    """Базовый ViewSet для категорий и жанров."""
 
     permission_classes = (IsAdminOrReadOnly,)
     search_fields = ('name',)
@@ -121,23 +126,22 @@ class CategoryGenreBaseViewSet(CreateListDestroyViewSet):
 
 
 class CategoryViewSet(CategoryGenreBaseViewSet):
-
-    """Класс для управления категориями"""
+    """Класс для управления категориями."""
 
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
 
 class GenreViewSet(CategoryGenreBaseViewSet):
+    """Класс для управления жанрами."""
 
-    """Класс для управления жанрами"""
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
 
 
 class TitleViewSet(viewsets.ModelViewSet):
+    """Класс для управления произведениями."""
 
-    """Класс для управления произведениями"""
     queryset = (
         Title.objects
         .annotate(rating=Avg('reviews__score'))
@@ -161,7 +165,6 @@ class TitleViewSet(viewsets.ModelViewSet):
 
 
 class ReviewsViewSet(viewsets.ModelViewSet):
-
     """Класс для управления отзывов на произведения."""
 
     serializer_class = ReviewsSerializer
@@ -181,8 +184,8 @@ class ReviewsViewSet(viewsets.ModelViewSet):
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-
     """Класс для управления комментариев к отзывам."""
+
     serializer_class = CommentSerializer
     permission_classes = (
         IsAuthenticatedOrReadOnly, IsAuthorAdminModeratorOrReadOnly

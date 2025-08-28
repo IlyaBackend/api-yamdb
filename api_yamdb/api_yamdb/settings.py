@@ -2,7 +2,9 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+
 from dotenv import load_dotenv
+
 
 load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -111,6 +113,7 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 DEFAULT_FROM_EMAIL = 'no-reply@yamdb.ru'

@@ -3,16 +3,17 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from api_yamdb.constants import (EMAIL_MAX_LENGTH, FIRST_NAME_MAX_LENGTH,
-                                 LAST_NAME_MAX_LENGTH, MY_USER_PROFILE,
-                                 RATING_MAX_VALUE, RATING_MIN_VALUE,
-                                 REGULAR_USERNAME, USERNAME_MAX_LENGTH)
+from api_yamdb.constants import (CONFIRMATION_CODE_MAX_LENGTH,
+                                 EMAIL_MAX_LENGTH, RATING_MAX_VALUE,
+                                 RATING_MIN_VALUE, REGULAR_USERNAME, ROLE_USER,
+                                 USERNAME_MAX_LENGTH)
 from reviews.models import Category, Comment, Genre, Review, Title, User
 
 
 class UserSignUpSerializer(serializers.ModelSerializer):
     """
     Сериализатор для регистрации нового пользователя.
+
     Принимает только username и email
     """
 
@@ -61,26 +62,9 @@ class UserSignUpSerializer(serializers.ModelSerializer):
 class AdminUserSerializer(serializers.ModelSerializer):
     """
     Сериализатор для администратора.
-    Админ может создавать пользователей и назначать им роль.
-    """
 
-    first_name = serializers.CharField(
-        required=False,
-        max_length=FIRST_NAME_MAX_LENGTH,
-        allow_blank=True,
-        default=''
-    )
-    last_name = serializers.CharField(
-        required=False,
-        max_length=LAST_NAME_MAX_LENGTH,
-        allow_blank=True,
-        default=''
-    )
-    bio = serializers.CharField(
-        required=False,
-        allow_blank=True,
-        default=''
-    )
+    Админ умеет создавать пользователей и назначать им роль.
+    """
 
     class Meta:
         model = User
@@ -88,21 +72,11 @@ class AdminUserSerializer(serializers.ModelSerializer):
             'username', 'email', 'first_name', 'last_name', 'bio', 'role'
         )
 
-    def update(self, instance, validated_data):
-        if validated_data.get('username') == 'me':
-            raise serializers.ValidationError({
-                'username': 'Нельзя использовать "me" в качестве username'
-            })
-        if self.context.get('view') and (
-                self.context['view'].action == MY_USER_PROFILE
-        ):
-            validated_data.pop('role', None)
-        return super().update(instance, validated_data)
-
 
 class TokenSerializer(serializers.Serializer):
     """
     Сериализатор для валидации username, confirmation_code
+
     и последующего создания токена.
     """
 
@@ -110,21 +84,19 @@ class TokenSerializer(serializers.Serializer):
         max_length=USERNAME_MAX_LENGTH,
         required=True
     )
-    confirmation_code = serializers.CharField(max_length=255, required=True)
+    confirmation_code = serializers.CharField(
+        max_length=CONFIRMATION_CODE_MAX_LENGTH, required=True
+    )
 
     def validate(self, data):
         username = data.get('username')
         confirmation_code = data.get('confirmation_code')
-        if not username or not confirmation_code:
-            raise ValidationError(
-                {'error': '"username" и "confirmation_code" обязательны'}
-            )
         user = get_object_or_404(User, username=username)
         if not user.check_confirmation_code(confirmation_code):
             raise ValidationError(
                 {'error': 'Код подтверждения неверен.'}
             )
-        self.context['user'] = user
+        self.context[ROLE_USER] = user
         return data
 
 

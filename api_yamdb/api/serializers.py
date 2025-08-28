@@ -180,14 +180,6 @@ class ReviewsSerializer(serializers.ModelSerializer):
                 )
         return data
 
-    def validate_score(self, value):
-        if not RATING_MIN_VALUE <= value <= RATING_MAX_VALUE:
-            raise serializers.ValidationError(
-                f'Оценка должна быть от {self.RATING_MIN_VALUE} '
-                f'до {self.RATING_MAX_VALUE}.'
-            )
-        return value
-
 
 class CommentSerializer(serializers.ModelSerializer):
     """Сериализатор для комментариев к отзывам на произведения."""
@@ -196,6 +188,6 @@ class CommentSerializer(serializers.ModelSerializer):
         read_only=True, slug_field='username'
     )
 
-    class Meta():
+    class Meta:
         model = Comment
         fields = ('id', 'text', 'author', 'pub_date')

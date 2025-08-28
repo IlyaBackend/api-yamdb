@@ -36,5 +36,4 @@ class IsAuthorAdminModeratorOrReadOnly(BasePermission):
             obj.author == user
             or user.is_admin()
             or user.is_moderator
-            or user.is_superuser
         )

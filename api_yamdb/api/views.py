@@ -11,18 +11,17 @@ from rest_framework.permissions import (SAFE_METHODS, AllowAny,
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
+from api.filters import TitleFilters
+from api.pagination import StandardPagination
+from api.permissions import (IsAdmin, IsAdminOrReadOnly,
+                             IsAuthorAdminModeratorOrReadOnly)
+from api.serializers import (AdminUserSerializer, CategorySerializer,
+                             CommentSerializer, GenreSerializer,
+                             ReviewsSerializer, TitleCRUDSerializer,
+                             TitleSerializer, TokenSerializer,
+                             UserSignUpSerializer)
 from api_yamdb.constants import MY_USER_PROFILE, ROLE_USER
 from reviews.models import Category, Genre, Review, Title, User
-
-from .filters import TitleFilters
-from .pagination import StandardPagination
-from .permissions import (IsAdmin, IsAdminOrReadOnly,
-                          IsAuthorAdminModeratorOrReadOnly)
-from .serializers import (AdminUserSerializer, CategorySerializer,
-                          CommentSerializer, GenreSerializer,
-                          ReviewsSerializer, TitleCRUDSerializer,
-                          TitleSerializer, TokenSerializer,
-                          UserSignUpSerializer)
 
 
 class CreateListDestroyViewSet(

@@ -15,6 +15,8 @@ User = get_user_model()
 class Command(BaseCommand):
     """Команда для импорта данных из CSV файлов."""
 
+    DATA_DIR = os.path.join(BASE_DIR, 'static', 'data')
+
     def handle(self, *args, **options):
         models_files = [
             (Category, 'category.csv'),
@@ -31,7 +33,7 @@ class Command(BaseCommand):
 
     def import_model(self, model, filename):
         """Импортирует данные для одной модели."""
-        filepath = os.path.join(BASE_DIR, 'static', 'data', filename)
+        filepath = os.path.join(self.DATA_DIR, filename)
 
         try:
             with open(filepath, 'r', encoding='utf-8') as f:

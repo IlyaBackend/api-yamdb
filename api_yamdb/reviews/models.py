@@ -5,8 +5,7 @@ from django.db import models
 from api_yamdb.constants import (CATEGORY_GENRE_MAX_LENGTH, RATING_MAX_VALUE,
                                  RATING_MIN_VALUE, STR_LENGTH,
                                  TITLE_NAME_MAX_LENGH)
-
-from .validators import validate_year_not_future
+from reviews.validators import validate_year_not_future
 
 User = get_user_model()
 

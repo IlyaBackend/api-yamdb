@@ -6,8 +6,7 @@ from django.db import models
 from api_yamdb.constants import (EMAIL_MAX_LENGTH, MY_USER_PROFILE, ROLE_ADMIN,
                                  ROLE_CHOICES, ROLE_MAX_LENGTH, ROLE_MODERATOR,
                                  ROLE_USER, USERNAME_MAX_LENGTH)
-
-from .validators import username_validator, validate_username
+from users.validators import username_validator, validate_username
 
 
 class Account(AbstractUser):
@@ -51,7 +50,7 @@ class Account(AbstractUser):
         if self.username == MY_USER_PROFILE:
             raise ValidationError({
                 'username':
-                F'Нельзя использовать {MY_USER_PROFILE} в качестве username'
+                f'Нельзя использовать {MY_USER_PROFILE} в качестве username'
             })
 
     def generate_confirmation_code(self):

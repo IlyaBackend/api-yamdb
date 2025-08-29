@@ -93,5 +93,15 @@ python manage.py import_csv
 - [arkondr](https://github.com/arkondr) — разработка логики произведений
 - [IlyaBackend](https://github.com/IlyaBackend) — тимлид, архитектура проекта
 
+```
 
+##  Примеры API-запросов
+- **Регистрация нового пользователя /api/v1/auth/signup/**
+  Запрос:
+POST /api/v1/auth/signup/
+Content-Type: application/json
 
+{
+  "email": "user@example.com",
+  "username": "new_user"
+}

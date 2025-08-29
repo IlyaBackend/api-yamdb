@@ -141,8 +141,14 @@ class Review(AuthorContentModel):
     )
     score = models.PositiveSmallIntegerField(
         validators=[
-            MinValueValidator(RATING_MIN_VALUE),
-            MaxValueValidator(RATING_MAX_VALUE)
+            MinValueValidator(
+                RATING_MIN_VALUE,
+                message=f'Оценка должна быть не меньше {RATING_MIN_VALUE}.'
+            ),
+            MaxValueValidator(
+                RATING_MAX_VALUE,
+                message=f'Оценка должна быть не больше {RATING_MAX_VALUE}.'
+            )
         ],
         verbose_name='Оценка произведения'
     )

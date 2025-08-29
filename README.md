@@ -95,13 +95,101 @@ python manage.py import_csv
 
 ```
 
-##  Примеры API-запросов
-- **Регистрация нового пользователя /api/v1/auth/signup/**
-  Запрос:
-POST /api/v1/auth/signup/
-Content-Type: application/json
+## Примеры API-запросов
 
+---
+
+### **Регистрация нового пользователя**
+
+* **Эндпоинт:** `POST /api/v1/auth/signup/`
+* **Content-Type:** `application/json`
+
+**Пример запроса:**
+
+```json
 {
   "email": "user@example.com",
-  "username": "new_user"
+  "username": "^w\\Z"
 }
+```
+**Ответ:**
+
+```json
+{
+  "email": "string",
+  "username": "string"
+}
+```
+
+---
+
+### **Получение JWT-токена**
+
+* **Эндпоинт:** `POST /api/v1/auth/token/`
+* **Content-Type:** `application/json`
+
+**Пример запроса:**
+
+```json
+{
+  "username": "^w\\Z",
+  "confirmation_code": "string"
+}
+```
+**Ответ:**
+
+```json
+{
+  "token": "string"
+}
+```
+
+---
+
+### **Получение данных своей учетной записи**
+
+* **Эндпоинт:** `GET /api/v1/users/me/`
+* **Content-Type:** `application/json`
+
+**Ответ:**
+
+```json
+{
+  "username": "^w\\Z",
+  "email": "user@example.com",
+  "first_name": "string",
+  "last_name": "string",
+  "bio": "string",
+  "role": "user"
+}
+```
+---
+
+### **Изменение данных своей учетной записи**
+
+* **Эндпоинт:** `PATCH /api/v1/users/me/`
+* **Content-Type:** `application/json`
+
+**Пример запроса:**
+
+```json
+{
+  "username": "^w\\Z",
+  "email": "user@example.com",
+  "first_name": "string",
+  "last_name": "string",
+  "bio": "string"
+}
+```
+**Ответ:**
+
+```json
+{
+  "username": "^w\\Z",
+  "email": "user@example.com",
+  "first_name": "string",
+  "last_name": "string",
+  "bio": "string",
+  "role": "user"
+}
+```

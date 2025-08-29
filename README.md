@@ -1,3 +1,195 @@
 # api_yamdb
 api_yamdb
 
+
+#  YaMDb – отзывы пользователей на произведения
+
+Проект **YaMDb** собирает отзывы пользователей на различные произведения: фильмы, книги, музыку и тд.  
+Пользователи могут оставлять отзывы, выставлять оценки и комментировать.
+
+---
+
+##  Алгоритм регистрации пользователей
+
+1. Пользователь отправляет **POST-запрос** для добавления нового пользователя с параметрами  
+   `email` и `username` → эндпоинт: /api/v1/auth/signup/
+2. На указанный `email` приходит письмо с кодом подтверждения (`confirmation_code`).
+3. Пользователь отправляет **POST-запрос** с `username` и `confirmation_code` на эндпоинт: /api/v1/auth/token/
+В ответ приходит `token` (JWT-токен).
+4. При желании пользователь может отправить **PATCH-запрос** на эндпоинт: /api/v1/users/me/ и заполнить профиль.
+и заполнить профиль.
+
+##  Пользовательские роли
+
+-  **Аноним**  
+  Только чтение: описания произведений, отзывы, комментарии.
+
+-  **User**  
+  Всё, что доступно анониму, плюс:  
+  • публикация отзывов и оценок  
+  • комментарии  
+  • редактирование и удаление **своих** материалов  
+
+-  **Moderator**  
+  Всё, что доступно пользователю, плюс:  
+  • удаление **любых** отзывов и комментариев  
+
+-  **Admin**  
+  Полный контроль:  
+  • управление проектом  
+  • создание/удаление произведений, категорий, жанров  
+  • назначение ролей  
+
+-  **Superuser Django**  
+  Все права `admin` + технические права Django.
+
+
+---
+
+##  Технологии
+
+- Python 3.9+
+- Django Rest Framework
+- JWT (JSON Web Tokens)
+- SQLite
+
+---
+
+##  Установка и запуск проекта
+
+```bash
+# Клонировать репозиторий
+git clone https://github.com/IlyaBackend/api-yamdb.git
+cd yamdb
+
+# Создать и активировать виртуальное окружение
+python -m venv venv
+source venv/bin/activate    # Linux/macOS
+venv\Scripts\activate       # Windows
+
+# Установить зависимости
+pip install -r requirements.txt
+
+# Выполнить миграции
+python manage.py migrate
+
+# Создать суперпользователя
+python manage.py createsuperuser
+
+# Запустить проект
+python manage.py runserver
+
+Наполнение базы данных тестовыми данными из CSV
+
+# В проекте есть management-команда для импорта данных из CSV файлов
+# Запуск команды наполнения из директории проекта:
+
+python manage.py import_csv
+
+
+##  Авторы
+
+- [AlekseyGusev157](https://github.com/AlekseyGusev157) — разработка логики отзывов и комментариев
+- [arkondr](https://github.com/arkondr) — разработка логики произведений
+- [IlyaBackend](https://github.com/IlyaBackend) — тимлид, архитектура проекта
+
+```
+
+## Примеры API-запросов
+
+---
+
+### **Регистрация нового пользователя**
+
+* **Эндпоинт:** `POST /api/v1/auth/signup/`
+* **Content-Type:** `application/json`
+
+**Пример запроса:**
+
+```json
+{
+  "email": "user@example.com",
+  "username": "^w\\Z"
+}
+```
+**Ответ:**
+
+```json
+{
+  "email": "string",
+  "username": "string"
+}
+```
+
+---
+
+### **Получение JWT-токена**
+
+* **Эндпоинт:** `POST /api/v1/auth/token/`
+* **Content-Type:** `application/json`
+
+**Пример запроса:**
+
+```json
+{
+  "username": "^w\\Z",
+  "confirmation_code": "string"
+}
+```
+**Ответ:**
+
+```json
+{
+  "token": "string"
+}
+```
+
+---
+
+### **Получение данных своей учетной записи**
+
+* **Эндпоинт:** `GET /api/v1/users/me/`
+* **Content-Type:** `application/json`
+
+**Ответ:**
+
+```json
+{
+  "username": "^w\\Z",
+  "email": "user@example.com",
+  "first_name": "string",
+  "last_name": "string",
+  "bio": "string",
+  "role": "user"
+}
+```
+---
+
+### **Изменение данных своей учетной записи**
+
+* **Эндпоинт:** `PATCH /api/v1/users/me/`
+* **Content-Type:** `application/json`
+
+**Пример запроса:**
+
+```json
+{
+  "username": "^w\\Z",
+  "email": "user@example.com",
+  "first_name": "string",
+  "last_name": "string",
+  "bio": "string"
+}
+```
+**Ответ:**
+
+```json
+{
+  "username": "^w\\Z",
+  "email": "user@example.com",
+  "first_name": "string",
+  "last_name": "string",
+  "bio": "string",
+  "role": "user"
+}
+```

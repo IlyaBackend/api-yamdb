@@ -15,7 +15,6 @@ class CategoryGenreBase(models.Model):
 
     name = models.CharField(
         max_length=CATEGORY_GENRE_MAX_LENGTH,
-
         verbose_name='Название'
     )
     slug = models.SlugField(unique=True, verbose_name='Слаг')
@@ -51,7 +50,6 @@ class Title(models.Model):
         max_length=TITLE_NAME_MAX_LENGH,
         verbose_name='Название произведения'
     )
-
     year = models.SmallIntegerField(
         verbose_name='Год выпуска',
         validators=[validate_year_not_future],

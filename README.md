@@ -86,13 +86,6 @@ python manage.py runserver
 
 python manage.py import_csv
 
-
-##  Авторы
-
-- [AlekseyGusev157](https://github.com/AlekseyGusev157) — разработка логики отзывов и комментариев
-- [arkondr](https://github.com/arkondr) — разработка логики произведений
-- [IlyaBackend](https://github.com/IlyaBackend) — тимлид, архитектура проекта
-
 ```
 
 ## Примеры API-запросов
@@ -193,3 +186,9 @@ python manage.py import_csv
   "role": "user"
 }
 ```
+##  Авторы
+
+- [AlekseyGusev157](https://github.com/AlekseyGusev157) — разработка логики отзывов и комментариев
+- [arkondr](https://github.com/arkondr) — разработка логики произведений
+- [IlyaBackend](https://github.com/IlyaBackend) — тимлид, архитектура проекта
+
